@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <meta name="description" content="Smart Travel - Generate AI-powered travel itineraries">
+    <title>Smart Travel</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23007bff' width='192' height='192'/><text x='50%' y='50%' font-size='120' fill='white' text-anchor='middle' dy='.3em'>✈</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ Smart Travel</h1>
+            <p class="subtitle">AI-Powered Travel Itineraries</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <input 
+                    type="text" 
+                    id="destination" 
+                    placeholder="Enter a destination (e.g., Paris, Tokyo, New York)"
+                    class="destination-input"
+                >
+                <button id="planBtn" class="plan-button">Plan Trip</button>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Generating your itinerary...</p>
+            </div>
+
+            <div id="results" class="results-section hidden">
+                <div class="result-card">
+                    <h2 id="resultTitle"></h2>
+                    <div id="itinerary" class="itinerary-content"></div>
+                </div>
+            </div>
+
+            <div id="error" class="error-message hidden"></div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Smart Travel | Powered by Groq API</p>
+        </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Register service worker for PWA support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
