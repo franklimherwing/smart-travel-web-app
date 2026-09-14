@@ -47,3 +47,34 @@ Phase 2 adds POI detail sheets, proximity content/audio, and IndexedDB-backed of
 ## Privacy
 
 Location is read directly from the browser and is not uploaded by this Phase 1 implementation.
+
+
+## v0.4.0 — AI Guide & Natural Voice
+
+The local development app now supports:
+- Natural AI-generated tour narration through the OpenAI Audio Speech API
+- Conversational Ask AI guide through the OpenAI Responses API
+- Search across the current demo destination
+- 30-minute four-stop tour generation
+- Walking directions through Google Maps
+- Automatic arrival narration when Audio Mode is enabled
+- Rome, Guatemala City, and Zacapa demo destinations
+
+### Enable AI voice and Ask AI locally
+
+1. Create an OpenAI API key at https://platform.openai.com/api-keys
+2. In the project folder, create a file named `.env.local`
+3. Add:
+
+```
+OPENAI_API_KEY=your_key_here
+```
+
+4. Never commit or share `.env.local`. It is ignored by Git.
+5. Restart the development server after adding or changing the key:
+
+```bash
+npm run dev
+```
+
+The API key stays server-side. The browser calls the local `/api/tts` and `/api/guide` endpoints instead of receiving the key.
