@@ -45,3 +45,146 @@ button:active { transform: scale(.96); }
   .top-bar, .ai-dock { left:50%; right:auto; width:min(560px, calc(100% - 32px)); transform:translateX(-50%); }
   .map-controls { right:max(24px, calc((100% - 620px)/2)); }
 }
+
+
+.rome-demo-button {
+  position:absolute;
+  z-index:1000;
+  top:126px;
+  left:50%;
+  transform:translateX(-50%);
+  min-height:44px;
+  border:0;
+  border-radius:999px;
+  padding:0 16px;
+  background:rgba(250,250,247,.95);
+  box-shadow:0 4px 16px rgba(26,26,26,.14);
+  font-weight:800;
+  cursor:pointer;
+}
+
+.poi-sheet {
+  position:absolute;
+  z-index:1100;
+  left:12px;
+  right:12px;
+  bottom:max(12px, env(safe-area-inset-bottom));
+  border-radius:28px;
+  background:#FAFAF7;
+  box-shadow:0 16px 50px rgba(26,26,26,.28);
+  padding:12px 18px 18px;
+  max-height:70vh;
+  overflow:auto;
+}
+
+.sheet-handle {
+  width:42px;
+  height:5px;
+  border-radius:999px;
+  background:#d0d0ca;
+  margin:0 auto 8px;
+}
+
+.sheet-close {
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#efefe9;
+  font-size:27px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.poi-title-row {
+  display:grid;
+  grid-template-columns:60px 1fr;
+  gap:14px;
+  align-items:center;
+  padding-right:44px;
+}
+
+.poi-hero-icon {
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:#e8f2ef;
+  font-size:30px;
+}
+
+.poi-category {
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  font-size:11px;
+  font-weight:900;
+  color:#0F766E;
+}
+
+.poi-title-row h2 {
+  margin:2px 0 3px;
+  font-family:Georgia, 'Times New Roman', serif;
+  font-size:27px;
+  line-height:1.05;
+}
+
+.poi-distance {
+  margin:0;
+  color:#65655f;
+  font-size:14px;
+}
+
+.poi-description {
+  font-size:18px;
+  line-height:1.55;
+  margin:18px 0;
+}
+
+.poi-actions {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:9px;
+}
+
+.poi-actions button {
+  min-height:68px;
+  border:1px solid rgba(26,26,26,.1);
+  border-radius:18px;
+  background:white;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  cursor:pointer;
+}
+
+.poi-actions button span {
+  font-size:22px;
+}
+
+.poi-actions button strong {
+  font-size:13px;
+}
+
+.poi-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  margin-top:16px;
+  color:#65655f;
+  font-size:13px;
+}
+
+@media (min-width: 700px) {
+  .poi-sheet {
+    left:50%;
+    right:auto;
+    width:min(560px, calc(100% - 32px));
+    transform:translateX(-50%);
+  }
+}
