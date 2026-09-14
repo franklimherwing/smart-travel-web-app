@@ -29,7 +29,7 @@ export async function playNaturalNarration(text: string, onEnd: () => void) {
   const blob = await response.blob();
   currentUrl = URL.createObjectURL(blob);
   currentAudio = new Audio(currentUrl);
-  currentAudio.playbackRate = 1.05;
+  currentAudio.playbackRate = 1;
   currentAudio.onended = () => {
     stopNaturalNarration();
     onEnd();
