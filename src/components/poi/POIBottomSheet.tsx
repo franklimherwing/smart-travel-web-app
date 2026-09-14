@@ -102,7 +102,7 @@ export function POIBottomSheet({
         </button>
         <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
-          <strong>{expanded ? 'Less' : 'Read'}</strong>
+          <strong>{expanded ? 'Less' : 'Full Story'}</strong>
         </button>
         <button onClick={() => alert('AI guide connection arrives in Phase 3.')}>
           <span>✦</span>
@@ -134,6 +134,14 @@ export function POIBottomSheet({
           </div>
         </motion.div>
       )}
+
+      <div className="next-stop-card">
+        <span>🧭</span>
+        <div>
+          <small>KEEP EXPLORING</small>
+          <strong>Choose another nearby marker on the map</strong>
+        </div>
+      </div>
 
       <div className="poi-meta">
         <span>📍 Trigger radius: {poi.triggerRadius} m</span>
