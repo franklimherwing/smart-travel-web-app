@@ -415,3 +415,8 @@ button:active { transform: scale(.96); }
   font-size:22px;
   color:#0F766E;
 }
+
+.demo-switcher{position:absolute;z-index:1000;top:126px;left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:5px;border-radius:999px;background:rgba(250,250,247,.95);box-shadow:0 4px 16px rgba(26,26,26,.14);max-width:calc(100% - 24px);overflow-x:auto}
+.demo-switcher button{border:0;border-radius:999px;padding:9px 12px;background:transparent;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}
+.demo-switcher button.active{background:#0F766E;color:white}
+.rome-demo-button{display:none}
