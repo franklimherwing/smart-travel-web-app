@@ -339,11 +339,15 @@ button:active { transform: scale(.96); }
   }
 }
 
-.version-badge {
+
+.app-signature {
   position:absolute;
   z-index:1200;
   right:8px;
   bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
   padding:3px 7px;
   border-radius:7px;
   background:rgba(26,26,26,.62);
@@ -352,4 +356,39 @@ button:active { transform: scale(.96); }
   font-weight:700;
   letter-spacing:.04em;
   pointer-events:none;
+  white-space:nowrap;
+}
+
+.app-signature span + span {
+  padding-left:8px;
+  border-left:1px solid rgba(255,255,255,.28);
+}
+
+.next-stop-card {
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:42px 1fr;
+  gap:10px;
+  align-items:center;
+  padding:12px 14px;
+  border-radius:16px;
+  background:#f0f5f3;
+}
+
+.next-stop-card > span {
+  font-size:24px;
+}
+
+.next-stop-card small {
+  display:block;
+  color:#0F766E;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+
+.next-stop-card strong {
+  display:block;
+  margin-top:2px;
+  font-size:14px;
 }
