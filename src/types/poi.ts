@@ -1,5 +1,10 @@
 export type POICategory = 'history' | 'architecture' | 'art' | 'religion' | 'landmark';
 
+export interface POISource {
+  label: string;
+  url: string;
+}
+
 export interface POI {
   id: string;
   name: string;
@@ -9,4 +14,8 @@ export interface POI {
   lng: number;
   triggerRadius: number;
   shortDescription: string;
+  longDescription: string;
+  facts: string[];
+  imageUrl?: string;
+  sources: POISource[];
 }
