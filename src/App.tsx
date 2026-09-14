@@ -110,7 +110,7 @@ export default function App() {
         </section>
       )}
 
-      <div className="version-badge" aria-label="App version">v0.2.1</div>
+      <div className="app-signature" aria-label="App identity and version"><span>Smart AI Travel by Franklim Herwing</span><span>v0.2.2</span></div>
 
       <AnimatePresence>
         {selectedPOI && (
