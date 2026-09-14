@@ -392,3 +392,26 @@ button:active { transform: scale(.96); }
   margin-top:2px;
   font-size:14px;
 }
+
+.next-stop-button {
+  width:100%;
+  grid-template-columns:42px 1fr auto;
+  border:0;
+  text-align:left;
+  cursor:pointer;
+  color:#1A1A1A;
+}
+
+.next-stop-button em {
+  display:block;
+  margin-top:3px;
+  color:#65655f;
+  font-size:12px;
+  font-style:normal;
+  font-weight:600;
+}
+
+.next-stop-button b {
+  font-size:22px;
+  color:#0F766E;
+}
