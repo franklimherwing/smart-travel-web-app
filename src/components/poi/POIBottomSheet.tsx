@@ -55,9 +55,14 @@ export function POIBottomSheet({
 
     window.speechSynthesis.cancel();
     const narration = new SpeechSynthesisUtterance(
-      `${poi.name}. ${poi.shortDescription} ${poi.longDescription}`
+      `Welcome to ${poi.name}! ${poi.shortDescription} Here’s what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`
     );
-    narration.rate = 0.92;
+    narration.rate = 1.08;
+    narration.pitch = 1.04;
+    narration.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
+    if (preferred) narration.voice = preferred;
     narration.onend = () => setSpeaking(false);
     narration.onerror = () => setSpeaking(false);
     setSpeaking(true);
