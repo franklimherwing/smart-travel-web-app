@@ -1,6 +1,6 @@
 const VOICE_INSTRUCTIONS = [
   'You are an enthusiastic, knowledgeable local walking-tour guide.',
-  'Sound warm, natural, conversational, curious, and genuinely excited to share the place.',
+  'Sound warm, spontaneous, conversational, curious, and genuinely excited to share the place.',
   'Use lively human pacing with subtle pauses, emphasis, and varied intonation.',
   'Do not sound like an announcer, audiobook narrator, GPS, robot, or customer-service agent.',
   'Speak slightly faster than an average museum audio guide, around normal friendly conversation speed.',
@@ -17,10 +17,11 @@ async function createSpeech(text: string, apiKey: string) {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini-tts',
-      voice: 'coral',
+      voice: 'marin',
       input: text,
       instructions: VOICE_INSTRUCTIONS,
       response_format: 'mp3',
+      speed: 1.05,
     }),
   });
 }
