@@ -1,8 +1,9 @@
-import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { Circle, CircleMarker, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useEffect } from 'react';
 import { romePOIs } from '../../data/rome-pois';
 import type { UserPosition } from '../../hooks/useGeolocation';
+import type { POI } from '../../types/poi';
 
 const ROME: [number, number] = [41.8986, 12.4769];
 
@@ -13,15 +14,39 @@ const poiIcon = (emoji: string) => L.divIcon({
   iconAnchor: [22, 22],
 });
 
-function FollowUser({ position }: { position: UserPosition | null }) {
+function MapMotion({
+  position,
+  romeFocusKey,
+}: {
+  position: UserPosition | null;
+  romeFocusKey: number;
+}) {
   const map = useMap();
+
   useEffect(() => {
-    if (position) map.flyTo([position.lat, position.lng], Math.max(map.getZoom(), 15), { duration: 1.2 });
-  }, [position, map]);
+    if (position && romeFocusKey === 0) {
+      map.flyTo([position.lat, position.lng], Math.max(map.getZoom(), 15), { duration: 1.2 });
+    }
+  }, [position, map, romeFocusKey]);
+
+  useEffect(() => {
+    if (romeFocusKey > 0) {
+      map.flyTo(ROME, 14, { duration: 1.2 });
+    }
+  }, [romeFocusKey, map]);
+
   return null;
 }
 
-export function TravelMap({ position }: { position: UserPosition | null }) {
+export function TravelMap({
+  position,
+  onSelectPOI,
+  romeFocusKey,
+}: {
+  position: UserPosition | null;
+  onSelectPOI: (poi: POI) => void;
+  romeFocusKey: number;
+}) {
   return (
     <MapContainer center={ROME} zoom={14} zoomControl={false} attributionControl={false} className="travel-map">
       <TileLayer
@@ -29,11 +54,12 @@ export function TravelMap({ position }: { position: UserPosition | null }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {romePOIs.map(poi => (
-        <Marker key={poi.id} position={[poi.lat, poi.lng]} icon={poiIcon(poi.emoji)}>
-          <Popup>
-            <strong>{poi.name}</strong><br />{poi.shortDescription}
-          </Popup>
-        </Marker>
+        <Marker
+          key={poi.id}
+          position={[poi.lat, poi.lng]}
+          icon={poiIcon(poi.emoji)}
+          eventHandlers={{ click: () => onSelectPOI(poi) }}
+        />
       ))}
       {position && (
         <>
@@ -41,7 +67,7 @@ export function TravelMap({ position }: { position: UserPosition | null }) {
           <CircleMarker center={[position.lat, position.lng]} radius={9} pathOptions={{ color:'#fff', fillColor:'#0F766E', fillOpacity:1, weight:3 }} />
         </>
       )}
-      <FollowUser position={position} />
+      <MapMotion position={position} romeFocusKey={romeFocusKey} />
     </MapContainer>
   );
 }
