@@ -5,6 +5,7 @@ import { POIBottomSheet } from './components/poi/POIBottomSheet';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useNearbyPOI } from './hooks/useNearbyPOI';
 import type { POI } from './types/poi';
+import { romePOIs } from './data/rome-pois';
 
 export default function App() {
   const { position, error } = useGeolocation();
@@ -21,12 +22,20 @@ export default function App() {
 
   const showNearby = nearbyPOI && !selectedPOI && dismissedNearbyId !== nearbyPOI.id;
 
+  const nextPOI = selectedPOI
+    ? romePOIs
+        .filter(poi => poi.id !== selectedPOI.id)
+        .map(poi => ({ poi, distance: Math.hypot(poi.lat - selectedPOI.lat, poi.lng - selectedPOI.lng) }))
+        .sort((a, b) => a.distance - b.distance)[0]?.poi ?? null
+    : null;
+
   return (
     <main className="app-shell">
       <TravelMap
         position={position}
         onSelectPOI={setSelectedPOI}
         romeFocusKey={romeFocusKey}
+        focusedPOI={selectedPOI}
       />
 
       <header className="top-bar" aria-label="Map tools">
@@ -110,13 +119,15 @@ export default function App() {
         </section>
       )}
 
-      <div className="app-signature" aria-label="App identity and version"><span>Smart AI Travel by Franklim Herwing</span><span>v0.2.2</span></div>
+      <div className="app-signature" aria-label="App identity and version"><span>Smart AI Travel by Franklim Herwing</span><span>v0.2.3</span></div>
 
       <AnimatePresence>
         {selectedPOI && (
           <POIBottomSheet
             poi={selectedPOI}
             position={position}
+            nextPOI={nextPOI}
+            onNextPOI={() => nextPOI && setSelectedPOI(nextPOI)}
             onClose={() => setSelectedPOI(null)}
           />
         )}
