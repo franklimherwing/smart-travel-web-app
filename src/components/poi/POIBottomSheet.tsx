@@ -21,10 +21,14 @@ function formatDistance(meters:number) {
 export function POIBottomSheet({
   poi,
   position,
+  nextPOI,
+  onNextPOI,
   onClose,
 }: {
   poi: POI;
   position: UserPosition | null;
+  nextPOI: POI | null;
+  onNextPOI: () => void;
   onClose: () => void;
 }) {
   const [speaking, setSpeaking] = useState(false);
@@ -135,13 +139,17 @@ export function POIBottomSheet({
         </motion.div>
       )}
 
-      <div className="next-stop-card">
-        <span>🧭</span>
-        <div>
-          <small>KEEP EXPLORING</small>
-          <strong>Choose another nearby marker on the map</strong>
-        </div>
-      </div>
+      {nextPOI && (
+        <button className="next-stop-card next-stop-button" onClick={onNextPOI}>
+          <span>🧭</span>
+          <div>
+            <small>NEXT NEARBY STOP</small>
+            <strong>{nextPOI.emoji} {nextPOI.name}</strong>
+            <em>Tap to fly there and open its story</em>
+          </div>
+          <b>→</b>
+        </button>
+      )}
 
       <div className="poi-meta">
         <span>📍 Trigger radius: {poi.triggerRadius} m</span>
