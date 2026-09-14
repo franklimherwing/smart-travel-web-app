@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
 import type { UserPosition } from '../../hooks/useGeolocation';
+import { playNaturalNarration, stopNaturalNarration } from '../../services/naturalTTS';
 
 function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
   const R = 6371000;
@@ -18,42 +19,75 @@ function formatDistance(meters:number) {
   return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km away`;
 }
 
+function buildNarration(poi: POI) {
+  return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
+}
+
+function browserFallback(text:string, onEnd:()=>void) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const narration = new SpeechSynthesisUtterance(text);
+  narration.rate = 1.08;
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) narration.voice = preferred;
+  narration.onend = onEnd;
+  narration.onerror = onEnd;
+  window.speechSynthesis.speak(narration);
+}
+
 export function POIBottomSheet({
   poi,
   position,
+  nextPOI,
+  destinationName,
+  onAskAI,
+  onNextPOI,
   onClose,
 }: {
   poi: POI;
   position: UserPosition | null;
+  nextPOI: POI | null;
+  destinationName: string;
+  onAskAI: () => void;
+  onNextPOI: () => void;
   onClose: () => void;
 }) {
   const [speaking, setSpeaking] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
   useEffect(() => {
-    return () => window.speechSynthesis?.cancel();
-  }, []);
+    setExpanded(false);
+    return () => {
+      stopNaturalNarration();
+      window.speechSynthesis?.cancel();
+    };
+  }, [poi.id]);
 
-  const listen = () => {
-    if (!('speechSynthesis' in window)) {
-      alert('Audio narration is not supported in this browser.');
-      return;
-    }
-
+  const listen = async () => {
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopNaturalNarration();
+      window.speechSynthesis?.cancel();
       setSpeaking(false);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const narration = new SpeechSynthesisUtterance(`${poi.name}. ${poi.shortDescription}`);
-    narration.rate = 0.92;
-    narration.onend = () => setSpeaking(false);
-    narration.onerror = () => setSpeaking(false);
+    const text = buildNarration(poi);
     setSpeaking(true);
-    window.speechSynthesis.speak(narration);
+
+    try {
+      await playNaturalNarration(text, () => setSpeaking(false));
+    } catch {
+      browserFallback(text, () => setSpeaking(false));
+    }
+  };
+
+  const directions = () => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${poi.lat},${poi.lng}&travelmode=walking`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -80,26 +114,66 @@ export function POIBottomSheet({
         </div>
       </div>
 
+      {poi.imageUrl ? (
+        <img className="poi-photo" src={poi.imageUrl} alt={poi.name} loading="lazy" />
+      ) : (
+        <div className="poi-photo-placeholder" aria-hidden="true">
+          <span>{poi.emoji}</span>
+          <small>Photo coming soon</small>
+        </div>
+      )}
+
       <p className="poi-description">{poi.shortDescription}</p>
 
-      <div className="poi-actions">
+      <div className="poi-actions four">
         <button onClick={listen}>
           <span>{speaking ? '⏸' : '🎧'}</span>
           <strong>{speaking ? 'Stop' : 'Listen'}</strong>
         </button>
-        <button onClick={() => alert('Full historical story is the next content step.')}>
+        <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
-          <strong>Read</strong>
+          <strong>{expanded ? 'Less' : 'Full Story'}</strong>
         </button>
-        <button onClick={() => alert('AI guide connection arrives in Phase 3.')}>
+        <button onClick={onAskAI}>
           <span>✦</span>
           <strong>Ask AI</strong>
         </button>
+        <button onClick={directions}>
+          <span>↗</span>
+          <strong>Directions</strong>
+        </button>
       </div>
+
+      {expanded && (
+        <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <h3>The story</h3>
+          <p>{poi.longDescription}</p>
+          <h3>Quick facts</h3>
+          <ul>{poi.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
+          <h3>Sources</h3>
+          <div className="poi-sources">
+            {poi.sources.map(source => (
+              <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {nextPOI && (
+        <button className="next-stop-card next-stop-button" onClick={onNextPOI}>
+          <span>🧭</span>
+          <div>
+            <small>NEXT NEARBY STOP</small>
+            <strong>{nextPOI.emoji} {nextPOI.name}</strong>
+            <em>Tap to fly there and open its story</em>
+          </div>
+          <b>→</b>
+        </button>
+      )}
 
       <div className="poi-meta">
         <span>📍 Trigger radius: {poi.triggerRadius} m</span>
-        <span>🗺️ Demo content</span>
+        <span>🗺️ {destinationName}</span>
       </div>
     </motion.section>
   );
