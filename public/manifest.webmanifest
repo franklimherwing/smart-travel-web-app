@@ -1,0 +1,11 @@
+{
+  "name": "Smart Travel AI",
+  "short_name": "Smart Travel",
+  "description": "GPS self-guided walking tours with an AI guide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#0F766E",
+  "orientation": "portrait-primary",
+  "icons": []
+}
