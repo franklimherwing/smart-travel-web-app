@@ -28,12 +28,14 @@ export function POIBottomSheet({
   onClose: () => void;
 }) {
   const [speaking, setSpeaking] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
   useEffect(() => {
+    setExpanded(false);
     return () => window.speechSynthesis?.cancel();
-  }, []);
+  }, [poi.id]);
 
   const listen = () => {
     if (!('speechSynthesis' in window)) {
@@ -48,7 +50,9 @@ export function POIBottomSheet({
     }
 
     window.speechSynthesis.cancel();
-    const narration = new SpeechSynthesisUtterance(`${poi.name}. ${poi.shortDescription}`);
+    const narration = new SpeechSynthesisUtterance(
+      `${poi.name}. ${poi.shortDescription} ${poi.longDescription}`
+    );
     narration.rate = 0.92;
     narration.onend = () => setSpeaking(false);
     narration.onerror = () => setSpeaking(false);
@@ -80,6 +84,15 @@ export function POIBottomSheet({
         </div>
       </div>
 
+      {poi.imageUrl ? (
+        <img className="poi-photo" src={poi.imageUrl} alt={poi.name} loading="lazy" />
+      ) : (
+        <div className="poi-photo-placeholder" aria-hidden="true">
+          <span>{poi.emoji}</span>
+          <small>Photo coming soon</small>
+        </div>
+      )}
+
       <p className="poi-description">{poi.shortDescription}</p>
 
       <div className="poi-actions">
@@ -87,9 +100,9 @@ export function POIBottomSheet({
           <span>{speaking ? '⏸' : '🎧'}</span>
           <strong>{speaking ? 'Stop' : 'Listen'}</strong>
         </button>
-        <button onClick={() => alert('Full historical story is the next content step.')}>
+        <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
-          <strong>Read</strong>
+          <strong>{expanded ? 'Less' : 'Read'}</strong>
         </button>
         <button onClick={() => alert('AI guide connection arrives in Phase 3.')}>
           <span>✦</span>
@@ -97,9 +110,34 @@ export function POIBottomSheet({
         </button>
       </div>
 
+      {expanded && (
+        <motion.div
+          className="poi-story"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h3>The story</h3>
+          <p>{poi.longDescription}</p>
+
+          <h3>Quick facts</h3>
+          <ul>
+            {poi.facts.map(fact => <li key={fact}>{fact}</li>)}
+          </ul>
+
+          <h3>Sources</h3>
+          <div className="poi-sources">
+            {poi.sources.map(source => (
+              <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+                {source.label} ↗
+              </a>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       <div className="poi-meta">
         <span>📍 Trigger radius: {poi.triggerRadius} m</span>
-        <span>🗺️ Demo content</span>
+        <span>🗺️ Rome demo</span>
       </div>
     </motion.section>
   );
