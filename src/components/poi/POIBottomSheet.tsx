@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
 import type { UserPosition } from '../../hooks/useGeolocation';
+import { playNaturalNarration, stopNaturalNarration } from '../../services/naturalTTS';
 
 function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
   const R = 6371000;
@@ -18,16 +19,38 @@ function formatDistance(meters:number) {
   return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km away`;
 }
 
+function buildNarration(poi: POI) {
+  return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
+}
+
+function browserFallback(text:string, onEnd:()=>void) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const narration = new SpeechSynthesisUtterance(text);
+  narration.rate = 1.08;
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) narration.voice = preferred;
+  narration.onend = onEnd;
+  narration.onerror = onEnd;
+  window.speechSynthesis.speak(narration);
+}
+
 export function POIBottomSheet({
   poi,
   position,
   nextPOI,
+  destinationName,
+  onAskAI,
   onNextPOI,
   onClose,
 }: {
   poi: POI;
   position: UserPosition | null;
   nextPOI: POI | null;
+  destinationName: string;
+  onAskAI: () => void;
   onNextPOI: () => void;
   onClose: () => void;
 }) {
@@ -38,35 +61,33 @@ export function POIBottomSheet({
 
   useEffect(() => {
     setExpanded(false);
-    return () => window.speechSynthesis?.cancel();
+    return () => {
+      stopNaturalNarration();
+      window.speechSynthesis?.cancel();
+    };
   }, [poi.id]);
 
-  const listen = () => {
-    if (!('speechSynthesis' in window)) {
-      alert('Audio narration is not supported in this browser.');
-      return;
-    }
-
+  const listen = async () => {
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopNaturalNarration();
+      window.speechSynthesis?.cancel();
       setSpeaking(false);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const narration = new SpeechSynthesisUtterance(
-      `Welcome to ${poi.name}! ${poi.shortDescription} Here’s what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`
-    );
-    narration.rate = 1.08;
-    narration.pitch = 1.04;
-    narration.volume = 1;
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name)) || voices.find(v => v.lang.startsWith('en'));
-    if (preferred) narration.voice = preferred;
-    narration.onend = () => setSpeaking(false);
-    narration.onerror = () => setSpeaking(false);
+    const text = buildNarration(poi);
     setSpeaking(true);
-    window.speechSynthesis.speak(narration);
+
+    try {
+      await playNaturalNarration(text, () => setSpeaking(false));
+    } catch {
+      browserFallback(text, () => setSpeaking(false));
+    }
+  };
+
+  const directions = () => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${poi.lat},${poi.lng}&travelmode=walking`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -104,7 +125,7 @@ export function POIBottomSheet({
 
       <p className="poi-description">{poi.shortDescription}</p>
 
-      <div className="poi-actions">
+      <div className="poi-actions four">
         <button onClick={listen}>
           <span>{speaking ? '⏸' : '🎧'}</span>
           <strong>{speaking ? 'Stop' : 'Listen'}</strong>
@@ -113,32 +134,26 @@ export function POIBottomSheet({
           <span>📖</span>
           <strong>{expanded ? 'Less' : 'Full Story'}</strong>
         </button>
-        <button onClick={() => alert('AI guide connection arrives in Phase 3.')}>
+        <button onClick={onAskAI}>
           <span>✦</span>
           <strong>Ask AI</strong>
+        </button>
+        <button onClick={directions}>
+          <span>↗</span>
+          <strong>Directions</strong>
         </button>
       </div>
 
       {expanded && (
-        <motion.div
-          className="poi-story"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <h3>The story</h3>
           <p>{poi.longDescription}</p>
-
           <h3>Quick facts</h3>
-          <ul>
-            {poi.facts.map(fact => <li key={fact}>{fact}</li>)}
-          </ul>
-
+          <ul>{poi.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
           <h3>Sources</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (
-              <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
-                {source.label} ↗
-              </a>
+              <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
             ))}
           </div>
         </motion.div>
@@ -158,7 +173,7 @@ export function POIBottomSheet({
 
       <div className="poi-meta">
         <span>📍 Trigger radius: {poi.triggerRadius} m</span>
-        <span>🗺️ Rome demo</span>
+        <span>🗺️ {destinationName}</span>
       </div>
     </motion.section>
   );
