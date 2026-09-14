@@ -110,6 +110,8 @@ export default function App() {
         </section>
       )}
 
+      <div className="version-badge" aria-label="App version">v0.2.1</div>
+
       <AnimatePresence>
         {selectedPOI && (
           <POIBottomSheet
