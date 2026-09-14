@@ -17,9 +17,11 @@ const poiIcon = (emoji: string) => L.divIcon({
 function MapMotion({
   position,
   romeFocusKey,
+  focusedPOI,
 }: {
   position: UserPosition | null;
   romeFocusKey: number;
+  focusedPOI: POI | null;
 }) {
   const map = useMap();
 
@@ -35,6 +37,12 @@ function MapMotion({
     }
   }, [romeFocusKey, map]);
 
+  useEffect(() => {
+    if (focusedPOI) {
+      map.flyTo([focusedPOI.lat, focusedPOI.lng], 16, { duration: 1.1 });
+    }
+  }, [focusedPOI, map]);
+
   return null;
 }
 
@@ -42,10 +50,12 @@ export function TravelMap({
   position,
   onSelectPOI,
   romeFocusKey,
+  focusedPOI,
 }: {
   position: UserPosition | null;
   onSelectPOI: (poi: POI) => void;
   romeFocusKey: number;
+  focusedPOI: POI | null;
 }) {
   return (
     <MapContainer center={ROME} zoom={14} zoomControl={false} attributionControl={false} className="travel-map">
@@ -67,7 +77,7 @@ export function TravelMap({
           <CircleMarker center={[position.lat, position.lng]} radius={9} pathOptions={{ color:'#fff', fillColor:'#0F766E', fillOpacity:1, weight:3 }} />
         </>
       )}
-      <MapMotion position={position} romeFocusKey={romeFocusKey} />
+      <MapMotion position={position} romeFocusKey={romeFocusKey} focusedPOI={focusedPOI} />
     </MapContainer>
   );
 }
