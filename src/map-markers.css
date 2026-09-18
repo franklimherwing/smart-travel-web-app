@@ -18,7 +18,3 @@
   height: 100%;
   transform: translateY(-.5px);
 }
-
-/* Release label is kept here so deployed clients visibly identify this map release. */
-.app-signature span:last-child { font-size: 0; }
-.app-signature span:last-child::after { content: 'v0.4.3'; font-size: 10px; }

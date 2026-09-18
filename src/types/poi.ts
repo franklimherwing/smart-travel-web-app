@@ -1,4 +1,4 @@
-export type POICategory = 'history' | 'architecture' | 'art' | 'religion' | 'landmark' | 'nature';
+export type POICategory = 'history' | 'architecture' | 'art' | 'religion' | 'landmark' | 'nature' | 'food' | 'culture';
 
 export interface POISource {
   label: string;

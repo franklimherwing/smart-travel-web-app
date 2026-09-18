@@ -9,6 +9,7 @@ import { useGeolocation } from './hooks/useGeolocation';
 import { useNearbyPOI } from './hooks/useNearbyPOI';
 import { romePOIs } from './data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from './data/guatemala-pois';
+import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
 import { playNaturalNarration } from './services/naturalTTS';
 import type { POI } from './types/poi';
 
@@ -31,7 +32,7 @@ function browserFallback(text: string) {
 
 export default function App() {
   const { position, error } = useGeolocation();
-  const allPOIs = useMemo(() => [...romePOIs, ...guatemalaCityPOIs, ...zacapaPOIs], []);
+  const allPOIs = useMemo(() => [...romePOIs, ...guatemalaCityPOIs, ...zacapaPOIs, ...zacapaExtraPOIs], []);
   const nearbyPOI = useNearbyPOI(position, allPOIs);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [demo, setDemo] = useState<Demo>('rome');
@@ -44,7 +45,7 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const activePOIs = demo === 'guatemala' ? guatemalaCityPOIs : demo === 'zacapa' ? zacapaPOIs : romePOIs;
+  const activePOIs = demo === 'guatemala' ? guatemalaCityPOIs : demo === 'zacapa' ? [...zacapaPOIs, ...zacapaExtraPOIs] : romePOIs;
   const destinationName = demo === 'guatemala' ? 'Guatemala City' : demo === 'zacapa' ? 'Zacapa, Guatemala' : 'Rome, Italy';
   const nextPOI = selectedPOI ? activePOIs.filter(p => p.id !== selectedPOI.id).map(p => ({ poi:p, distance:Math.hypot(p.lat-selectedPOI.lat,p.lng-selectedPOI.lng) })).sort((a,b)=>a.distance-b.distance)[0]?.poi ?? null : null;
 
@@ -92,7 +93,7 @@ export default function App() {
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>Ask about this area</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowTour(true)}>30-min tour</button><button onClick={()=>{setSearchQuery('');setShowSearch(true);}}>What’s nearby?</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.4.2</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.4.3</span></div>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} onAskAI={()=>setShowChat(true)} onNextPOI={()=>nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} />}</AnimatePresence>
     <AnimatePresence>{showChat && <GuideChat context={{destination:destinationName,poiName:selectedPOI?.name,poiSummary:selectedPOI?.longDescription,latitude:position?.lat,longitude:position?.lng}} onClose={()=>setShowChat(false)} />}</AnimatePresence>
     <AnimatePresence>{showTour && <TourOverview stops={tourStops} onClose={()=>setShowTour(false)} onStart={()=>{setShowTour(false); if(tourStops[0]) setSelectedPOI(tourStops[0]);}} />}</AnimatePresence>
