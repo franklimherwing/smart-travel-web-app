@@ -23,8 +23,8 @@ function MapMotion({position,demo,demoFocusKey,focusedPOI}:{position:UserPositio
 }
 export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;onSelectPOI:(poi:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}) {
  const pois=demo==='guatemala'?guatemalaCityPOIs:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs]:romePOIs;
- return <MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl={false} className="travel-map">
-  <TileLayer attribution="&copy; CARTO &copy; OpenStreetMap contributors" url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"/>
+ return <MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl={true} className="travel-map">
+  <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
   {pois.map(p=><Marker key={p.id} position={[p.lat,p.lng]} icon={poiIcon(p)} eventHandlers={{click:()=>onSelectPOI(p)}}/>)}
   {position&&<><Circle center={[position.lat,position.lng]} radius={position.accuracy} pathOptions={{color:'#555',fillColor:'#777',fillOpacity:.05,weight:1}}/><CircleMarker center={[position.lat,position.lng]} radius={8} pathOptions={{color:'#fff',fillColor:'#333',fillOpacity:1,weight:3}}/></>}
   <MapMotion position={position} demo={demo} demoFocusKey={demoFocusKey} focusedPOI={focusedPOI}/>
