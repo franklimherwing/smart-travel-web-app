@@ -703,3 +703,11 @@ button:active { transform: scale(.96); }
 .save-place{width:100%;min-height:44px;margin:-6px 0 12px;border:1px solid rgba(26,26,26,.1);border-radius:14px;background:#fff;font-weight:800;cursor:pointer}
 .guide-input{grid-template-columns:1fr auto auto}
 .guide-input button[aria-label="Speak question"]{min-width:50px;padding:0;border:0;border-radius:16px;background:#e8f2ef;font-size:20px;cursor:pointer}
+
+
+/* v0.5.1 voice picker */
+.voice-menu{position:absolute;z-index:1300;right:68px;bottom:210px;width:210px;padding:12px;border-radius:18px;background:#FAFAF7;box-shadow:0 10px 32px rgba(26,26,26,.22);display:grid;gap:7px}
+.voice-menu strong{font-family:Georgia,'Times New Roman',serif;font-size:18px;margin-bottom:2px}
+.voice-menu button{min-height:42px;border:1px solid rgba(26,26,26,.1);border-radius:12px;background:white;text-align:left;padding:0 12px;font-weight:750;cursor:pointer}
+.voice-menu button.selected{background:#0F766E;color:white}
+.voice-menu small{color:#65655f;line-height:1.3}
