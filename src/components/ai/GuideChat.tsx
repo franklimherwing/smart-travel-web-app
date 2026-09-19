@@ -32,7 +32,14 @@ export function GuideChat({
     }
   };
 
-  const chips = ['Tell me the most interesting fact','What should I notice here?','Give me a 1-minute story'];
+  const chips = ['What am I near right now?','What should I notice here?','Give me a 1-minute story'];
+  const voiceAsk = () => {
+    const Recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!Recognition) { setMessages(items=>[...items,{role:'guide',text:'Voice questions are not supported by this browser yet. You can still type your question.'}]); return; }
+    const recognition = new Recognition(); recognition.lang='en-US'; recognition.interimResults=false;
+    recognition.onresult=(event:any)=>setInput(event.results[0][0].transcript);
+    recognition.start();
+  };
 
   return (
     <motion.section className="guide-chat" initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}} transition={{type:'spring',stiffness:340,damping:34}}>
@@ -46,7 +53,7 @@ export function GuideChat({
       </div>
       <form onSubmit={send} className="guide-input">
         <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Ask about history, food, culture…" />
-        <button type="submit">Send</button>
+        <button type="button" aria-label="Speak question" onClick={voiceAsk}>🎙️</button><button type="submit">Send</button>
       </form>
     </motion.section>
   );
