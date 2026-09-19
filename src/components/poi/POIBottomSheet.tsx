@@ -42,6 +42,8 @@ export function POIBottomSheet({
   position,
   nextPOI,
   destinationName,
+  saved,
+  onToggleSaved,
   onAskAI,
   onNextPOI,
   onClose,
@@ -50,6 +52,8 @@ export function POIBottomSheet({
   position: UserPosition | null;
   nextPOI: POI | null;
   destinationName: string;
+  saved: boolean;
+  onToggleSaved: () => void;
   onAskAI: () => void;
   onNextPOI: () => void;
   onClose: () => void;
@@ -124,6 +128,7 @@ export function POIBottomSheet({
       )}
 
       <p className="poi-description">{poi.shortDescription}</p>
+      <button className="save-place" onClick={onToggleSaved}>{saved ? '★ Saved to My Trip' : '☆ Save to My Trip'}</button>
 
       <div className="poi-actions four">
         <button onClick={listen}>
