@@ -697,3 +697,9 @@ button:active { transform: scale(.96); }
     font-size:9px;
   }
 }
+
+
+/* v0.5.0 travel companion */
+.save-place{width:100%;min-height:44px;margin:-6px 0 12px;border:1px solid rgba(26,26,26,.1);border-radius:14px;background:#fff;font-weight:800;cursor:pointer}
+.guide-input{grid-template-columns:1fr auto auto}
+.guide-input button[aria-label="Speak question"]{min-width:50px;padding:0;border:0;border-radius:16px;background:#e8f2ef;font-size:20px;cursor:pointer}
