@@ -12,7 +12,7 @@ function extractText(data: any) {
 export default async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  const apiKey = Netlify.env.get('OPENAI_API_KEY');
+  const apiKey = Netlify.env.get('OPENAI_API_KEY') || Deno.env.get('OPENAI_API_KEY');
   if (!apiKey) return new Response('OPENAI_API_KEY is not configured.', { status: 503 });
 
   try {
@@ -41,7 +41,7 @@ export default async (req: Request) => {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ model: 'gpt-5-mini', input: prompt }),
+      body: JSON.stringify({ model: 'gpt-5-mini', input: prompt, max_output_tokens: 500 }),
     });
 
     if (!response.ok) return new Response(await response.text(), { status: response.status });
