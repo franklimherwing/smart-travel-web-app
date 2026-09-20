@@ -128,7 +128,6 @@ export function POIBottomSheet({
       )}
 
       <p className="poi-description">{poi.shortDescription}</p>
-      <button className="save-place" onClick={onToggleSaved}>{saved ? '★ Saved to My Trip' : '☆ Save to My Trip'}</button>
 
       <div className="poi-actions four">
         <button onClick={listen}>
