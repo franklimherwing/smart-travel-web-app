@@ -6,7 +6,6 @@ import { GuideChat } from './components/ai/GuideChat';
 import { TourOverview } from './components/tour/TourOverview';
 import { SearchPanel } from './components/search/SearchPanel';
 import { ExplorePanel } from './components/explore/ExplorePanel';
-import { MyTripPanel } from './components/trip/MyTripPanel';
 import { CameraGuide } from './components/camera/CameraGuide';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useNearbyPOI } from './hooks/useNearbyPOI';
@@ -49,9 +48,10 @@ export default function App() {
   const [showTour, setShowTour] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
-  const [showMyTrip, setShowMyTrip] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTour, setActiveTour] = useState<POI[]>([]);
+  const [tourIndex, setTourIndex] = useState(-1);
   const [savedIds, setSavedIds] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smarttravel-saved') || '[]'); } catch { return []; } });
 
   useEffect(() => { localStorage.setItem('smarttravel-saved', JSON.stringify(savedIds)); }, [savedIds]);
@@ -80,8 +80,31 @@ export default function App() {
     return ordered;
   }, [activePOIs, selectedPOI]);
 
+  const startTour = () => {
+    if (!tourStops.length) return;
+    setShowTour(false);
+    setActiveTour(tourStops);
+    setTourIndex(0);
+    setSelectedPOI(tourStops[0]);
+    setAudioMode(true);
+  };
+  const advanceTour = () => {
+    if (tourIndex < 0 || !activeTour.length) return;
+    const next = tourIndex + 1;
+    if (next >= activeTour.length) { setTourIndex(-1); setActiveTour([]); return; }
+    setTourIndex(next);
+    setSelectedPOI(activeTour[next]);
+  };
+
   const showNearby = nearbyPOI && !selectedPOI && dismissedNearbyId !== nearbyPOI.id;
   useEffect(() => { if (nearbyPOI?.id !== dismissedNearbyId && navigator.vibrate) navigator.vibrate(80); }, [nearbyPOI, dismissedNearbyId]);
+  useEffect(() => {
+    if (tourIndex < 0 || !activeTour[tourIndex]) return;
+    const stop = activeTour[tourIndex];
+    const text = narrationText(stop);
+    playNaturalNarration(text, advanceTour).catch(() => browserFallback(text));
+  }, [tourIndex, activeTour]);
+
   useEffect(() => {
     if (!audioMode || !nearbyPOI || autoNarratedId === nearbyPOI.id) return;
     setAutoNarratedId(nearbyPOI.id);
@@ -89,7 +112,7 @@ export default function App() {
   }, [audioMode, nearbyPOI, autoNarratedId]);
 
   const openDemo = (nextDemo: Demo) => {
-    setDemo(nextDemo); setSelectedPOI(null); setShowChat(false); setShowTour(false); setShowSearch(false); setShowExplore(false); setShowMyTrip(false); setShowCamera(false); setDemoFocusKey(k => k + 1);
+    setDemo(nextDemo); setSelectedPOI(null); setShowChat(false); setShowTour(false); setShowSearch(false); setShowExplore(false); setShowCamera(false); setDemoFocusKey(k => k + 1);
   };
 
   return <main className="app-shell">
@@ -111,13 +134,12 @@ export default function App() {
     {error && <div className="gps-note">Location unavailable — demo maps still work.</div>}
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
-    {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showMyTrip && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={()=>setShowTour(true)}>30-min tour</button><button onClick={()=>setShowMyTrip(true)}>★ My Trip</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.7.2</span></div>
+    {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={()=>setShowTour(true)}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.8.0</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
-    <AnimatePresence>{showMyTrip && <MyTripPanel pois={allPOIs.filter(p=>savedIds.includes(p.id))} onClose={()=>setShowMyTrip(false)} onSelect={p=>{setSelectedPOI(p);setShowMyTrip(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
-    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} />}</AnimatePresence>
+    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} />}</AnimatePresence>
     <AnimatePresence>{showChat && <GuideChat context={{destination:destinationName,poiName:selectedPOI?.name,poiSummary:selectedPOI?.longDescription,latitude:position?.lat,longitude:position?.lng}} onClose={()=>setShowChat(false)} />}</AnimatePresence>
-    <AnimatePresence>{showTour && <TourOverview stops={tourStops} onClose={()=>setShowTour(false)} onStart={()=>{setShowTour(false); if(tourStops[0]) setSelectedPOI(tourStops[0]);}} />}</AnimatePresence>
+    <AnimatePresence>{showTour && <TourOverview stops={tourStops} onClose={()=>setShowTour(false)} onStart={startTour} />}</AnimatePresence>
   </main>;
 }
