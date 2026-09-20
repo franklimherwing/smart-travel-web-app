@@ -32,13 +32,22 @@ async function guide(req: Request, env: Env) {
   return text ? Response.json({text}) : new Response('OpenAI returned an empty answer.', {status:502});
 }
 
+async function translateNarration(text:string, language:string, env:Env) {
+  if (language !== 'es') return text;
+  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:`Translate the following travel-guide narration completely into natural Latin American Spanish. Keep proper place names unchanged. Output Spanish only. Do not include English, notes, labels, or quotation marks.\n\n${text}`,max_output_tokens:1200})});
+  if(!response.ok) throw new Error(await response.text());
+  const data:any=await response.json();
+  return extractText(data) || text;
+}
+
 async function tts(req: Request, env: Env) {
   if (!env.OPENAI_API_KEY) return new Response('OPENAI_API_KEY is not configured.', { status: 503 });
   const { text, voice='natural', language='en' } = await req.json() as any;
   if (!String(text ?? '').trim()) return new Response('Text is required.', {status:400});
   const voices:Record<string,string>={natural:'marin',warm:'cedar',bright:'coral',spanish:'marin'};
   const selected = voice === 'my-voice' && env.OPENAI_CUSTOM_VOICE_ID ? {id:env.OPENAI_CUSTOM_VOICE_ID} : (voices[voice] || voices.natural);
-  const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:selected,input:String(text),instructions: language === 'es' ? 'Habla en español latinoamericano claro, cálido y natural, como un guía local amigable. Empieza a hablar de inmediato.' : 'Speak in clear, warm, natural English like a friendly local guide. Begin speaking immediately.',response_format:'mp3'})});
+  const spokenText = await translateNarration(String(text), language, env);
+  const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:selected,input:spokenText,instructions: language === 'es' ? 'Habla únicamente en español latinoamericano claro, cálido y natural, como un guía local amigable. No uses palabras ni frases en inglés excepto nombres propios que oficialmente estén en inglés. Empieza a hablar de inmediato.' : 'Speak only in clear, warm, natural English like a friendly local guide. Do not switch into Spanish. Begin speaking immediately.',response_format:'mp3'})});
   if(!response.ok) return new Response(await response.text(),{status:response.status});
   return new Response(response.body,{headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store'}});
 }
