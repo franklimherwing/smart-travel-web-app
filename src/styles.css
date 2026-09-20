@@ -726,5 +726,6 @@ button:active { transform: scale(.96); }
 
 .search-button{font-size:27px!important}
 
-/* v0.8.3 language selector */
-.language-switcher{position:absolute;z-index:1000;top:174px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(250,250,247,.95);box-shadow:0 4px 16px rgba(26,26,26,.14)}.language-switcher button{border:0;border-radius:999px;padding:7px 14px;background:transparent;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}.language-switcher button.active{background:#1A1A1A;color:white}
+
+/* v0.9.0 language control */
+.language-pill{border:0;cursor:pointer;font-weight:800}.language-pill span:first-child{font-size:16px}
