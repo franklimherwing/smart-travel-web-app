@@ -1,6 +1,6 @@
 import { Circle, CircleMarker, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { romePOIs } from '../../data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from '../../data/guatemala-pois';
 import { zacapaExtraPOIs } from '../../data/zacapa-extra-pois';
@@ -16,7 +16,8 @@ const CENTERS:Record<Demo,{center:[number,number],zoom:number}> = {
 const poiIcon=(poi:POI)=>L.divIcon({className:'poi-marker poi-marker--compact',html:`<span aria-hidden="true">${poi.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]});
 function MapMotion({position,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}) {
  const map=useMap();
- useEffect(()=>{ if(position && demoFocusKey===0) map.flyTo([position.lat,position.lng],Math.max(map.getZoom(),15),{duration:1.2}); },[position,map,demoFocusKey]);
+ const centeredOnGps = useRef(false);
+ useEffect(()=>{ if(position && demoFocusKey===0 && !centeredOnGps.current){ centeredOnGps.current=true; map.flyTo([position.lat,position.lng],Math.max(map.getZoom(),15),{duration:1.2}); } },[position,map,demoFocusKey]);
  useEffect(()=>{ if(demoFocusKey>0){const d=CENTERS[demo];map.flyTo(d.center,d.zoom,{duration:1.2});}},[demo,demoFocusKey,map]);
  useEffect(()=>{if(focusedPOI)map.flyTo([focusedPOI.lat,focusedPOI.lng],16,{duration:1.1});},[focusedPOI,map]);
  return null;
