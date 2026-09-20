@@ -25,8 +25,9 @@ export function GuideChat({
     try {
       const answer = await askGuide(question, context);
       setMessages(items => [...items, {role:'guide', text:answer}]);
-    } catch {
-      setMessages(items => [...items, {role:'guide', text:'The AI guide is not connected yet. Add your API key and try again.'}]);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'Unknown connection error';
+      setMessages(items => [...items, {role:'guide', text:`AI connection error: ${detail}`}]);
     } finally {
       setLoading(false);
     }
