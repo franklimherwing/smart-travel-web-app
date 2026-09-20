@@ -13,13 +13,13 @@ export function stopNaturalNarration() {
   }
 }
 
-export async function playNaturalNarration(text: string, onEnd: () => void, voice = localStorage.getItem('smarttravel-voice') || 'natural') {
+export async function playNaturalNarration(text: string, onEnd: () => void, voice = localStorage.getItem('smarttravel-voice') || 'natural', language = localStorage.getItem('smarttravel-language') || 'en') {
   stopNaturalNarration();
 
   const response = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice }),
+    body: JSON.stringify({ text, voice, language }),
   });
 
   if (!response.ok) {
