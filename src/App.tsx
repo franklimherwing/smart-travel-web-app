@@ -12,6 +12,7 @@ import { useNearbyPOI } from './hooks/useNearbyPOI';
 import { romePOIs } from './data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from './data/guatemala-pois';
 import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
+import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from './data/expansion-pois';
 import { playNaturalNarration } from './services/naturalTTS';
 import type { POI } from './types/poi';
 
@@ -35,7 +36,7 @@ function browserFallback(text: string) {
 
 export default function App() {
   const { position, error } = useGeolocation();
-  const allPOIs = useMemo(() => [...romePOIs, ...guatemalaCityPOIs, ...zacapaPOIs, ...zacapaExtraPOIs], []);
+  const allPOIs = useMemo(() => [...romePOIs, ...romeExpansionPOIs, ...guatemalaCityPOIs, ...guatemalaExpansionPOIs, ...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs], []);
   const nearbyPOI = useNearbyPOI(position, allPOIs);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [demo, setDemo] = useState<Demo>('rome');
@@ -66,7 +67,7 @@ export default function App() {
     if (nearest && nearest.d < .65) setDemo(nearest.id);
   }, [position]);
 
-  const activePOIs = demo === 'guatemala' ? guatemalaCityPOIs : demo === 'zacapa' ? [...zacapaPOIs, ...zacapaExtraPOIs] : romePOIs;
+  const activePOIs = demo === 'guatemala' ? [...guatemalaCityPOIs, ...guatemalaExpansionPOIs] : demo === 'zacapa' ? [...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs] : [...romePOIs, ...romeExpansionPOIs];
   const destinationName = demo === 'guatemala' ? 'Guatemala City' : demo === 'zacapa' ? 'Zacapa, Guatemala' : 'Rome, Italy';
   const nextPOI = selectedPOI ? activePOIs.filter(p => p.id !== selectedPOI.id).map(p => ({ poi:p, distance:Math.hypot(p.lat-selectedPOI.lat,p.lng-selectedPOI.lng) })).sort((a,b)=>a.distance-b.distance)[0]?.poi ?? null : null;
 
@@ -125,13 +126,12 @@ export default function App() {
       <button className="icon-button search-button" aria-label="Search" onClick={()=>setShowSearch(v=>!v)}>⌕</button><button className="icon-button" aria-label="Camera guide" onClick={()=>setShowCamera(true)}>📷</button>
       <div className="location-pill"><span className="eyebrow">EXPLORING</span><strong>{destinationName}</strong></div>
     </header>
-    <div className="walk-pill"><span>🚶</span><span>{position ? `GPS ±${Math.round(position.accuracy)}m` : 'Demo mode'}</span></div>
+    <button className="walk-pill language-pill" aria-label="Change guide language" onClick={()=>setLanguage(l=>l==='en'?'es':'en')}><span>🌐</span><span>{language==='en'?'English':'Español'}</span></button>
     <nav className="demo-switcher" aria-label="Demo destinations">
       <button className={demo==='rome'?'active':''} onClick={()=>openDemo('rome')}>🏛️ Rome</button>
       <button className={demo==='guatemala'?'active':''} onClick={()=>openDemo('guatemala')}>🇬🇹 Guatemala City</button>
       <button className={demo==='zacapa'?'active':''} onClick={()=>openDemo('zacapa')}>🌄 Zacapa</button>
     </nav>
-    <div className="language-switcher" aria-label="Guide language"><button className={language==='en'?'active':''} onClick={()=>setLanguage('en')}>English</button><button className={language==='es'?'active':''} onClick={()=>setLanguage('es')}>Español</button></div>
     <aside className="map-controls">
       <button className={`round-button ${audioMode?'active-control':''}`} aria-label="Audio mode" onClick={()=>setAudioMode(v=>!v)}>🎧</button><button className="round-button" aria-label="Choose voice" onClick={()=>setShowVoiceMenu(v=>!v)}>🗣️</button>
     </aside>
@@ -140,7 +140,7 @@ export default function App() {
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={()=>setShowTour(true)}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.8.3</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.0</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} />}</AnimatePresence>
