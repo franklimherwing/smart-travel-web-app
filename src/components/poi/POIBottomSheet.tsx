@@ -104,7 +104,8 @@ export function POIBottomSheet({
       aria-label={`Details for ${poi.name}`}
     >
       <div className="sheet-handle" />
-      <button className={`favorite-corner ${saved ? "saved" : ""}`} onClick={onToggleSaved} aria-label={saved ? "Remove from favorites" : "Add to favorites"}>{saved ? "★" : "☆"}</button>\n      <button className="sheet-close" onClick={onClose} aria-label="Close place details">×</button>
+      <button className={`favorite-corner ${saved ? "saved" : ""}`} onClick={onToggleSaved} aria-label={saved ? "Remove from favorites" : "Add to favorites"}>{saved ? "★" : "☆"}</button>
+      <button className="sheet-close" onClick={onClose} aria-label="Close place details">×</button>
 
       <div className="poi-title-row">
         <div className="poi-hero-icon" aria-hidden="true">{poi.emoji}</div>
