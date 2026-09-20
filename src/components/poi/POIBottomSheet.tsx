@@ -47,6 +47,7 @@ export function POIBottomSheet({
   onAskAI,
   onNextPOI,
   onClose,
+  tourActive = false,
 }: {
   poi: POI;
   position: UserPosition | null;
@@ -57,6 +58,7 @@ export function POIBottomSheet({
   onAskAI: () => void;
   onNextPOI: () => void;
   onClose: () => void;
+  tourActive?: boolean;
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -66,10 +68,12 @@ export function POIBottomSheet({
   useEffect(() => {
     setExpanded(false);
     return () => {
-      stopNaturalNarration();
-      window.speechSynthesis?.cancel();
+      if (!tourActive) {
+        stopNaturalNarration();
+        window.speechSynthesis?.cancel();
+      }
     };
-  }, [poi.id]);
+  }, [poi.id, tourActive]);
 
   const listen = async () => {
     if (speaking) {
