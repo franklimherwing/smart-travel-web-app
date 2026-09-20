@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { romePOIs } from '../../data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from '../../data/guatemala-pois';
 import { zacapaExtraPOIs } from '../../data/zacapa-extra-pois';
+import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from '../../data/expansion-pois';
 import type { UserPosition } from '../../hooks/useGeolocation';
 import type { POI } from '../../types/poi';
 
@@ -23,7 +24,7 @@ function MapMotion({position,demo,demoFocusKey,focusedPOI}:{position:UserPositio
  return null;
 }
 export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;onSelectPOI:(poi:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}) {
- const pois=demo==='guatemala'?guatemalaCityPOIs:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs]:romePOIs;
+ const pois=demo==='guatemala'?[...guatemalaCityPOIs,...guatemalaExpansionPOIs]:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs,...zacapaExpansionPOIs]:[...romePOIs,...romeExpansionPOIs];
  return <MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl={true} className="travel-map">
   <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
   {pois.map(p=><Marker key={p.id} position={[p.lat,p.lng]} icon={poiIcon(p)} eventHandlers={{click:()=>onSelectPOI(p)}}/>)}
