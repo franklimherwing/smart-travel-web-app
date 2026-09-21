@@ -15,6 +15,7 @@ import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
 import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from './data/expansion-pois';
 import { getNarrationProgress, pauseNaturalNarration, resumeNaturalNarration, speakInstantNarration, stopNaturalNarration } from './services/naturalTTS';
 import type { POI } from './types/poi';
+import { withSpanishPOIs } from './data/spanish-pois';
 
 type Demo = 'rome' | 'guatemala' | 'zacapa';
 type MapFilter = 'history' | 'food' | 'stories' | 'facts' | 'all';
@@ -38,7 +39,7 @@ function browserFallback(text: string, onEnd?: () => void, language = 'en') {
 
 export default function App() {
   const { position, error } = useGeolocation();
-  const allPOIs = useMemo(() => [...romePOIs, ...romeExpansionPOIs, ...guatemalaCityPOIs, ...guatemalaExpansionPOIs, ...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs], []);
+  const allPOIs = useMemo(() => withSpanishPOIs([...romePOIs, ...romeExpansionPOIs, ...guatemalaCityPOIs, ...guatemalaExpansionPOIs, ...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs]), []);
   const nearbyPOI = useNearbyPOI(position, allPOIs);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [demo, setDemo] = useState<Demo>('rome');
@@ -73,7 +74,7 @@ export default function App() {
     if (nearest && nearest.d < .65) setDemo(nearest.id);
   }, [position]);
 
-  const activePOIs = demo === 'guatemala' ? [...guatemalaCityPOIs, ...guatemalaExpansionPOIs] : demo === 'zacapa' ? [...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs] : [...romePOIs, ...romeExpansionPOIs];
+  const activePOIs = demo === 'guatemala' ? allPOIs.filter(p=>p.id.startsWith('gt-')) : demo === 'zacapa' ? allPOIs.filter(p=>p.id.startsWith('zacapa-')||p.id.startsWith('zx-')) : allPOIs.filter(p=>p.id.startsWith('rome-')||['colosseum','forum','pantheon','trevi','spanish-steps','navona','castel-sant-angelo','st-peters'].includes(p.id));
   const destinationName = demo === 'guatemala' ? 'Guatemala City' : demo === 'zacapa' ? 'Zacapa, Guatemala' : 'Rome, Italy';
   const filteredPOIs = useMemo(() => {
     if (mapFilter === 'all') return activePOIs;
@@ -181,7 +182,7 @@ export default function App() {
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar compact-guide" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><strong>{language==='es'?'Pregúntame':'Ask me'}</strong></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={openTour}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.10.8</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.10.9</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} previousPOI={previousPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onPreviousPOI={()=>previousPOI&&setSelectedPOI(previousPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
