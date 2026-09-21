@@ -768,3 +768,9 @@ button:active { transform: scale(.96); }
 .poi-skip-nav{position:sticky;bottom:8px;z-index:24;margin:16px auto 6px;width:max-content;display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:999px;background:rgba(250,250,247,.96);box-shadow:0 6px 22px rgba(26,26,26,.18);backdrop-filter:blur(12px)}
 .poi-skip-nav button{width:48px;height:42px;border:0;border-radius:999px;background:#0F766E;color:white;font-size:25px;font-weight:900;cursor:pointer}
 .poi-skip-nav button:disabled{opacity:.35;cursor:default}.poi-skip-nav span{font-size:11px;font-weight:850;color:#65655f;min-width:72px;text-align:center}
+
+
+/* v0.10.6 text-first POI layout */
+.poi-photo,.poi-photo-placeholder{display:none!important}
+.poi-skip-nav{position:relative;bottom:auto;margin:10px auto 4px;box-shadow:none;background:#f0f5f3}
+.poi-description{margin-top:12px}
