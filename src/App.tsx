@@ -19,7 +19,7 @@ import type { POI } from './types/poi';
 type Demo = 'rome' | 'guatemala' | 'zacapa';
 
 function narrationText(poi: POI, language:string) {
-  if (language === 'es') return `${poi.name}. Bienvenido. Estás visitando un lugar especial. ${poi.facts.length ? `Dato interesante: ${poi.facts[0]}.` : ''}`;
+  if (language === 'es') return `Bienvenido a ${poi.name}. ${poi.shortDescription} ${poi.longDescription} Datos interesantes: ${poi.facts.join('. ')}. Disfruta explorando este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
 }
 
@@ -57,7 +57,6 @@ export default function App() {
   const [activeTour, setActiveTour] = useState<POI[]>([]);
   const [tourIndex, setTourIndex] = useState(-1);
   const tourIndexRef = useRef(-1);
-  const tourRestartRef = useRef(0);
   const [savedIds, setSavedIds] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smarttravel-saved') || '[]'); } catch { return []; } });
 
   useEffect(() => { localStorage.setItem('smarttravel-saved', JSON.stringify(savedIds)); }, [savedIds]);
@@ -125,7 +124,6 @@ export default function App() {
     const wasTouring = tourIndexRef.current >= 0;
     stopNaturalNarration();
     setLanguage(nextLanguage);
-    if (wasTouring) tourRestartRef.current += 1;
   };
 
   useEffect(() => {
@@ -158,7 +156,7 @@ export default function App() {
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={openTour}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.5</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.6</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
