@@ -26,7 +26,7 @@ function spanishText(text:string) {
   return dictionary[text.toLowerCase()] || text;
 }
 function buildNarration(poi: POI, language:string) {
-  if (language === 'es') return `Bienvenido a ${poi.name}. ${poi.shortDescription} ${poi.longDescription} Datos interesantes: ${poi.facts.join('. ')}. Disfruta explorando este lugar.`;
+  if (language === 'es') return `Bienvenido a ${poi.nameEs ?? poi.name}. ${poi.shortDescriptionEs ?? poi.shortDescription} ${poi.longDescriptionEs ?? poi.longDescription} Datos interesantes: ${(poi.factsEs ?? poi.facts).join('. ')}. Disfruta explorando este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
 }
 
@@ -85,9 +85,9 @@ export function POIBottomSheet({
   }, [poi.id, poi.shortDescriptionEs, poi.longDescriptionEs, poi.factsEs]);
 
   const displayName = language === 'es' && poi.nameEs ? poi.nameEs : poi.name;
-  const displayShort = language === 'es' ? (spanish?.shortDescription ?? 'Contenido en español próximamente.') : poi.shortDescription;
-  const displayLong = language === 'es' ? (spanish?.longDescription ?? 'Contenido en español próximamente.') : poi.longDescription;
-  const displayFacts = language === 'es' ? (spanish?.facts ?? []) : poi.facts;
+  const displayShort = language === 'es' ? (spanish?.shortDescription ?? poi.shortDescription) : poi.shortDescription;
+  const displayLong = language === 'es' ? (spanish?.longDescription ?? poi.longDescription) : poi.longDescription;
+  const displayFacts = language === 'es' ? (spanish?.facts ?? poi.facts) : poi.facts;
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -154,14 +154,12 @@ export function POIBottomSheet({
         </div>
       </div>
 
-      {poi.imageUrl ? (
-        <img className="poi-photo" src={poi.imageUrl} alt={poi.name} loading="lazy" />
-      ) : (
-        <div className="poi-photo-placeholder" aria-hidden="true">
-          <span>{poi.emoji}</span>
-          <small>{language === 'es' ? 'Foto próximamente' : 'Photo coming soon'}</small>
-        </div>
-      )}
+
+      {(previousPOI || nextPOI) && <div className="poi-skip-nav">
+        <button onClick={onPreviousPOI} disabled={!previousPOI} aria-label={language==='es'?'Lugar anterior':'Previous place'}>←</button>
+        <span>{language==='es'?'Cambiar lugar':'Switch place'}</span>
+        <button onClick={onNextPOI} disabled={!nextPOI} aria-label={language==='es'?'Siguiente lugar':'Next place'}>→</button>
+      </div>}
 
       <p className="poi-description">{displayShort}</p>
 
@@ -199,11 +197,7 @@ export function POIBottomSheet({
         </motion.div>
       )}
 
-      {(previousPOI || nextPOI) && <div className="poi-skip-nav">
-        <button onClick={onPreviousPOI} disabled={!previousPOI} aria-label={language==='es'?'Lugar anterior':'Previous place'}>←</button>
-        <span>{language==='es'?'Cambiar lugar':'Switch place'}</span>
-        <button onClick={onNextPOI} disabled={!nextPOI} aria-label={language==='es'?'Siguiente lugar':'Next place'}>→</button>
-      </div>}
+
 
       {nextPOI && (
         <button className="next-stop-card next-stop-button" onClick={onNextPOI}>
