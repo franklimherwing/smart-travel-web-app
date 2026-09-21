@@ -36,8 +36,10 @@ function chooseBrowserVoice(language:string) {
   const voices = window.speechSynthesis?.getVoices() || [];
   if (language === 'es') {
     const spanish = voices.filter(v => /^es([_-]|$)/i.test(v.lang));
-    return spanish.find(v => /^es[_-](MX|US|GT|419)$/i.test(v.lang))
-      || spanish.find(v => /Paulina|Mónica|Monica|Jorge|Juan|Diego|Luciana|Sofía|Sofia/i.test(v.name))
+    return spanish.find(v => /Paulina/i.test(v.name))
+      || spanish.find(v => /^es[_-]MX$/i.test(v.lang))
+      || spanish.find(v => /^es[_-]US$/i.test(v.lang))
+      || spanish.find(v => /^es[_-](GT|419)$/i.test(v.lang))
       || spanish.find(v => /^es[_-]/i.test(v.lang))
       || null;
   }
@@ -64,7 +66,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   narrationActive = true;
   narrationPaused = false;
   utterance.lang = language === 'es' ? 'es-MX' : 'en-US';
-  utterance.rate = language === 'es' ? 0.94 : 1.04;
+  utterance.rate = language === 'es' ? 0.9 : 1.04;
   utterance.pitch = 1;
   const preferred = chooseBrowserVoice(language);
   if (preferred) {
