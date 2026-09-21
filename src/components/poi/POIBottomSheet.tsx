@@ -20,7 +20,7 @@ function formatDistance(meters:number) {
 }
 
 function buildNarration(poi: POI, language:string) {
-  if (language === 'es') return `${poi.name}. Escucha la historia y los datos interesantes de este lugar.`;
+  if (language === 'es') return `Bienvenido a ${poi.name}. ${poi.shortDescription} ${poi.longDescription} Datos interesantes: ${poi.facts.join('. ')}. Disfruta explorando este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
 }
 
@@ -65,7 +65,6 @@ export function POIBottomSheet({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [resumeAfterLanguageSwitch, setResumeAfterLanguageSwitch] = useState(false);
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -80,16 +79,8 @@ export function POIBottomSheet({
   }, [poi.id, tourActive]);
 
   useEffect(() => {
-    if (!speaking && !resumeAfterLanguageSwitch) return;
-    if (speaking) {
-      stopNaturalNarration();
-      setSpeaking(false);
-      setResumeAfterLanguageSwitch(true);
-      return;
-    }
+    if (!speaking) return;
     const text = buildNarration(poi, language);
-    setResumeAfterLanguageSwitch(false);
-    setSpeaking(true);
     speakInstantNarration(text, () => setSpeaking(false), language);
   }, [language]);
 
