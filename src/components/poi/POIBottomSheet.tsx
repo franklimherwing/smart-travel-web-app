@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
 import type { UserPosition } from '../../hooks/useGeolocation';
-import { playNaturalNarration, stopNaturalNarration } from '../../services/naturalTTS';
+import { speakInstantNarration, stopNaturalNarration } from '../../services/naturalTTS';
 
 function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
   const R = 6371000;
@@ -19,7 +19,8 @@ function formatDistance(meters:number) {
   return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km away`;
 }
 
-function buildNarration(poi: POI) {
+function buildNarration(poi: POI, language:string) {
+  if (language === 'es') return `${poi.name}. Escucha la historia y los datos interesantes de este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
 }
 
@@ -48,6 +49,7 @@ export function POIBottomSheet({
   onNextPOI,
   onClose,
   tourActive = false,
+  language = 'en',
 }: {
   poi: POI;
   position: UserPosition | null;
@@ -59,6 +61,7 @@ export function POIBottomSheet({
   onNextPOI: () => void;
   onClose: () => void;
   tourActive?: boolean;
+  language?: string;
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -75,6 +78,12 @@ export function POIBottomSheet({
     };
   }, [poi.id, tourActive]);
 
+  useEffect(() => {
+    if (!speaking) return;
+    stopNaturalNarration();
+    setSpeaking(false);
+  }, [language]);
+
   const listen = async () => {
     if (speaking) {
       stopNaturalNarration();
@@ -83,14 +92,10 @@ export function POIBottomSheet({
       return;
     }
 
-    const text = buildNarration(poi);
+    const text = buildNarration(poi, language);
     setSpeaking(true);
 
-    try {
-      await playNaturalNarration(text, () => setSpeaking(false));
-    } catch {
-      browserFallback(text, () => setSpeaking(false));
-    }
+    speakInstantNarration(text, () => setSpeaking(false), language);
   };
 
   const directions = () => {
