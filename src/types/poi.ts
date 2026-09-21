@@ -16,6 +16,9 @@ export interface POI {
   shortDescription: string;
   longDescription: string;
   facts: string[];
+  shortDescriptionEs?: string;
+  longDescriptionEs?: string;
+  factsEs?: string[];
   imageUrl?: string;
   sources: POISource[];
 }
