@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TravelMap } from './components/map/TravelMap';
 import { POIBottomSheet } from './components/poi/POIBottomSheet';
@@ -56,6 +56,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTour, setActiveTour] = useState<POI[]>([]);
   const [tourIndex, setTourIndex] = useState(-1);
+  const tourIndexRef = useRef(-1);
+  const tourRestartRef = useRef(0);
   const [savedIds, setSavedIds] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smarttravel-saved') || '[]'); } catch { return []; } });
 
   useEffect(() => { localStorage.setItem('smarttravel-saved', JSON.stringify(savedIds)); }, [savedIds]);
@@ -91,14 +93,17 @@ export default function App() {
     if (!tourStops.length) return;
     setShowTour(false);
     setActiveTour(tourStops);
+    tourIndexRef.current = 0;
     setTourIndex(0);
     setSelectedPOI(tourStops[0]);
     setAudioMode(true);
   };
   const advanceTour = () => {
-    if (tourIndex < 0 || !activeTour.length) return;
-    const next = tourIndex + 1;
-    if (next >= activeTour.length) { setTourIndex(-1); setActiveTour([]); return; }
+    const current = tourIndexRef.current;
+    if (current < 0 || !activeTour.length) return;
+    const next = current + 1;
+    if (next >= activeTour.length) { tourIndexRef.current = -1; setTourIndex(-1); setActiveTour([]); return; }
+    tourIndexRef.current = next;
     setTourIndex(next);
     setSelectedPOI(activeTour[next]);
   };
@@ -114,6 +119,14 @@ export default function App() {
     }, tourIndex === 0 ? 150 : 80);
     return () => window.clearTimeout(timer);
   }, [tourIndex, activeTour, language]);
+
+  const switchLanguage = (nextLanguage:string) => {
+    if (nextLanguage === language) return;
+    const wasTouring = tourIndexRef.current >= 0;
+    stopNaturalNarration();
+    setLanguage(nextLanguage);
+    if (wasTouring) tourRestartRef.current += 1;
+  };
 
   useEffect(() => {
     if (!audioMode || !nearbyPOI || autoNarratedId === nearbyPOI.id) return;
@@ -131,7 +144,7 @@ export default function App() {
       <button className="icon-button search-button" aria-label="Search" onClick={()=>setShowSearch(v=>!v)}>⌕</button><button className="icon-button" aria-label="Camera guide" onClick={()=>setShowCamera(true)}>📷</button>
       <div className="location-pill"><span className="eyebrow">EXPLORING</span><strong>{destinationName}</strong></div>
     </header>
-    <div className="walk-pill language-pill" aria-label="Guide language"><button className={language==='en'?'active':''} onClick={()=>{stopNaturalNarration();setLanguage('en')}}>English</button><button className={language==='es'?'active':''} onClick={()=>{stopNaturalNarration();setLanguage('es')}}>Español</button></div>
+    <div className="walk-pill language-pill" aria-label="Guide language"><button className={language==='en'?'active':''} onClick={()=>switchLanguage('en')>English</button><button className={language==='es'?'active':''} onClick={()=>switchLanguage('es')>Español</button></div>
     <nav className="demo-switcher" aria-label="Demo destinations">
       <button className={demo==='rome'?'active':''} onClick={()=>openDemo('rome')}>🏛️ Rome</button>
       <button className={demo==='guatemala'?'active':''} onClick={()=>openDemo('guatemala')}>🇬🇹 Guatemala City</button>
@@ -145,7 +158,7 @@ export default function App() {
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={openTour}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.3</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.4</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
