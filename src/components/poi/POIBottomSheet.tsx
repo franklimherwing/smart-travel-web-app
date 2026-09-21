@@ -48,11 +48,13 @@ export function POIBottomSheet({
   poi,
   position,
   nextPOI,
+  previousPOI,
   destinationName,
   saved,
   onToggleSaved,
   onAskAI,
   onNextPOI,
+  onPreviousPOI,
   onClose,
   tourActive = false,
   language = 'en',
@@ -60,11 +62,13 @@ export function POIBottomSheet({
   poi: POI;
   position: UserPosition | null;
   nextPOI: POI | null;
+  previousPOI: POI | null;
   destinationName: string;
   saved: boolean;
   onToggleSaved: () => void;
   onAskAI: () => void;
   onNextPOI: () => void;
+  onPreviousPOI: () => void;
   onClose: () => void;
   tourActive?: boolean;
   language?: string;
@@ -75,24 +79,15 @@ export function POIBottomSheet({
   useEffect(() => {
     if (poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs) {
       setSpanish({shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs});
-      return;
+    } else {
+      setSpanish(null);
     }
-    const cacheKey = `smarttravel-es-${poi.id}`;
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) { setSpanish(JSON.parse(cached)); return; }
-    } catch {}
-    setSpanish(null);
-    fetch('/api/translate-poi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:poi.name,shortDescription:poi.shortDescription,longDescription:poi.longDescription,facts:poi.facts})})
-      .then(async res => { if(!res.ok) throw new Error(await res.text()); return res.json(); })
-      .then(data => { setSpanish(data); try { localStorage.setItem(cacheKey,JSON.stringify(data)); } catch {} })
-      .catch(() => setSpanish(null));
-  }, [poi.id]);
+  }, [poi.id, poi.shortDescriptionEs, poi.longDescriptionEs, poi.factsEs]);
 
   const displayName = language === 'es' && poi.nameEs ? poi.nameEs : poi.name;
-  const displayShort = language === 'es' && spanish ? spanish.shortDescription : poi.shortDescription;
-  const displayLong = language === 'es' && spanish ? spanish.longDescription : poi.longDescription;
-  const displayFacts = language === 'es' && spanish ? spanish.facts : poi.facts;
+  const displayShort = language === 'es' ? (spanish?.shortDescription ?? 'Contenido en español próximamente.') : poi.shortDescription;
+  const displayLong = language === 'es' ? (spanish?.longDescription ?? 'Contenido en español próximamente.') : poi.longDescription;
+  const displayFacts = language === 'es' ? (spanish?.facts ?? []) : poi.facts;
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -168,7 +163,7 @@ export function POIBottomSheet({
         </div>
       )}
 
-      <p className="poi-description">{language === 'es' && !spanish ? 'Traduciendo…' : displayShort}</p>
+      <p className="poi-description">{displayShort}</p>
 
       <div className="poi-actions four">
         <button onClick={listen}>
@@ -192,9 +187,9 @@ export function POIBottomSheet({
       {expanded && (
         <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <h3>{language === 'es' ? 'La historia' : 'The story'}</h3>
-          <p>{language === 'es' && !spanish ? 'Traduciendo…' : displayLong}</p>
+          <p>{displayLong}</p>
           <h3>{language === 'es' ? 'Datos interesantes' : 'Quick facts'}</h3>
-          <ul>{(language === 'es' && !spanish ? [] : displayFacts).map(fact => <li key={fact}>{fact}</li>)}</ul>
+          <ul>{displayFacts.map(fact => <li key={fact}>{fact}</li>)}</ul>
           <h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (
@@ -203,6 +198,12 @@ export function POIBottomSheet({
           </div>
         </motion.div>
       )}
+
+      {(previousPOI || nextPOI) && <div className="poi-skip-nav">
+        <button onClick={onPreviousPOI} disabled={!previousPOI} aria-label={language==='es'?'Lugar anterior':'Previous place'}>←</button>
+        <span>{language==='es'?'Cambiar lugar':'Switch place'}</span>
+        <button onClick={onNextPOI} disabled={!nextPOI} aria-label={language==='es'?'Siguiente lugar':'Next place'}>→</button>
+      </div>}
 
       {nextPOI && (
         <button className="next-stop-card next-stop-button" onClick={onNextPOI}>
