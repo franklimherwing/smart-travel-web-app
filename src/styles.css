@@ -799,3 +799,38 @@ button:active { transform: scale(.96); }
 .ai-bar.compact-guide{position:absolute;left:12px;bottom:0;margin:0}
 .ai-dock .suggestions{align-self:center;justify-content:center;max-width:calc(100vw - 32px);margin:0 auto 70px;display:flex;flex-wrap:wrap}
 @media(max-width:520px){.ai-bar.compact-guide{left:8px}.ai-dock .suggestions{max-width:calc(100vw - 20px);margin-bottom:68px;gap:8px}}
+
+
+/* v0.11.0 responsive shell + four-button bottom navigation */
+.ai-dock{left:50%;right:auto;transform:translateX(-50%);width:min(680px,calc(100% - 24px));bottom:max(16px,env(safe-area-inset-bottom));display:block;pointer-events:none}
+.ai-dock>*{pointer-events:auto}
+.bottom-primary-actions{display:grid;grid-template-columns:1.15fr 1.15fr 1fr 58px;gap:9px;align-items:stretch}
+.bottom-primary-actions button{min-height:58px;border:0;border-radius:20px;background:rgba(250,250,247,.97);box-shadow:0 8px 28px rgba(26,26,26,.18);padding:8px 14px;font-size:15px;cursor:pointer;white-space:nowrap}
+.bottom-primary-actions .ask-me-button{background:#0F766E;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px}
+.bottom-primary-actions .ask-me-button span{font-size:20px}.bottom-primary-actions .more-button{font-size:22px;font-weight:900;padding:0}
+.quick-more-menu{display:none;position:absolute;right:0;bottom:68px;width:210px;padding:8px;background:rgba(250,250,247,.98);border-radius:18px;box-shadow:0 10px 32px rgba(26,26,26,.22)}
+.quick-more-open .quick-more-menu{display:grid;gap:6px}
+.quick-more-menu button{border:0;background:#f0f5f3;border-radius:13px;padding:13px;text-align:left;font-weight:800;cursor:pointer}
+
+/* Desktop/tablet: keep the experience compact instead of stretching phone UI */
+@media(min-width:800px){
+ .top-bar{left:24px;right:auto;width:min(700px,calc(100vw - 260px));padding-right:0}
+ .walk-pill{top:112px}
+ .demo-switcher{top:174px}
+ .poi-sheet{width:min(720px,calc(100vw - 360px));max-height:72vh;left:50%;right:auto;transform:translateX(-50%)!important;border-radius:28px}
+ .poi-description{font-size:18px;line-height:1.55}
+ .poi-story{font-size:16px;line-height:1.6}
+ .category-rail{right:22px}
+ .map-controls{right:22px}
+}
+@media(max-width:799px){
+ .bottom-primary-actions{grid-template-columns:1.05fr 1.15fr .9fr 52px;gap:6px}
+ .bottom-primary-actions button{min-height:54px;border-radius:17px;padding:7px 9px;font-size:13px}
+}
+@media(max-width:430px){
+ .ai-dock{width:calc(100% - 12px)}
+ .bottom-primary-actions{grid-template-columns:1fr 1.08fr .9fr 48px;gap:5px}
+ .bottom-primary-actions button{padding:6px;font-size:12px}
+ .bottom-primary-actions .ask-me-button{gap:4px}
+ .quick-more-menu{right:2px}
+}
