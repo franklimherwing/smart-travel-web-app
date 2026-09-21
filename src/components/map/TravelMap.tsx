@@ -23,8 +23,9 @@ function MapMotion({position,demo,demoFocusKey,focusedPOI}:{position:UserPositio
  useEffect(()=>{if(focusedPOI)map.flyTo([focusedPOI.lat,focusedPOI.lng],16,{duration:1.1});},[focusedPOI,map]);
  return null;
 }
-export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;onSelectPOI:(poi:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}) {
- const pois=demo==='guatemala'?[...guatemalaCityPOIs,...guatemalaExpansionPOIs]:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs,...zacapaExpansionPOIs]:[...romePOIs,...romeExpansionPOIs];
+export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI,filteredPOIs}:{position:UserPosition|null;onSelectPOI:(poi:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null;filteredPOIs?:POI[]}) {
+ const defaultPOIs=demo==='guatemala'?[...guatemalaCityPOIs,...guatemalaExpansionPOIs]:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs,...zacapaExpansionPOIs]:[...romePOIs,...romeExpansionPOIs];
+ const pois=filteredPOIs ?? defaultPOIs;
  return <MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl={true} className="travel-map">
   <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
   {pois.map(p=><Marker key={p.id} position={[p.lat,p.lng]} icon={poiIcon(p)} eventHandlers={{click:()=>onSelectPOI(p)}}/>)}
