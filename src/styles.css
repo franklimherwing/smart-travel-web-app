@@ -757,3 +757,8 @@ button:active { transform: scale(.96); }
 .search-row{position:sticky;top:0;z-index:20;background:#FAFAF7;padding-bottom:6px}
 .guide-chat header,.tour-overview header,.explore-panel header,.camera-guide header{position:sticky;top:0;z-index:30;background:#FAFAF7}
 .guide-chat header button,.tour-overview header button,.explore-panel header button,.camera-guide header button,.search-row button{position:relative;z-index:31;flex:0 0 auto}
+
+
+/* v0.10.4 global narration play/stop */
+.global-speech-control{position:absolute;z-index:1600;right:14px;bottom:max(18px,env(safe-area-inset-bottom));width:56px;height:56px;border:0;border-radius:50%;background:#1A1A1A;color:white;box-shadow:0 8px 24px rgba(26,26,26,.28);font-size:22px;font-weight:900;display:grid;place-items:center;cursor:pointer}
+.global-speech-control:active{transform:scale(.96)}
