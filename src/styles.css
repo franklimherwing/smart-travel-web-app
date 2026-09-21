@@ -774,3 +774,7 @@ button:active { transform: scale(.96); }
 .poi-photo,.poi-photo-placeholder{display:none!important}
 .poi-skip-nav{position:relative;bottom:auto;margin:10px auto 4px;box-shadow:none;background:#f0f5f3}
 .poi-description{margin-top:12px}
+
+
+/* v0.10.7 Spanish unlocks only when every POI is ready */
+.language-pill button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.35)}
