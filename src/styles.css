@@ -791,3 +791,11 @@ button:active { transform: scale(.96); }
 .suggestions{padding:0;gap:10px;max-width:calc(100vw - 24px)}
 .suggestions button{min-height:48px;padding:0 17px;font-size:15px;box-shadow:0 5px 16px rgba(26,26,26,.13)}
 @media(max-width:520px){.top-bar{padding-right:108px}.map-controls{right:8px}.icon-button,.round-button{min-width:46px;height:46px}.suggestions button{min-height:47px;padding:0 15px;font-size:14px}}
+
+
+/* v0.10.9 center menu actions; keep Ask Me anchored left */
+.ai-dock{left:0;right:0;width:100%;max-width:none;bottom:max(18px,env(safe-area-inset-bottom));align-items:stretch;pointer-events:none}
+.ai-dock>*{pointer-events:auto}
+.ai-bar.compact-guide{position:absolute;left:12px;bottom:0;margin:0}
+.ai-dock .suggestions{align-self:center;justify-content:center;max-width:calc(100vw - 32px);margin:0 auto 70px;display:flex;flex-wrap:wrap}
+@media(max-width:520px){.ai-bar.compact-guide{left:8px}.ai-dock .suggestions{max-width:calc(100vw - 20px);margin-bottom:68px;gap:8px}}
