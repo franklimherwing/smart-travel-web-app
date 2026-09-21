@@ -71,6 +71,24 @@ export function POIBottomSheet({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [spanish, setSpanish] = useState<{shortDescription:string;longDescription:string;facts:string[]}|null>(null);
+  useEffect(() => {
+    if (language !== 'es') return;
+    const cacheKey = `smarttravel-es-${poi.id}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) { setSpanish(JSON.parse(cached)); return; }
+    } catch {}
+    setSpanish(null);
+    fetch('/api/translate-poi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:poi.name,shortDescription:poi.shortDescription,longDescription:poi.longDescription,facts:poi.facts})})
+      .then(async res => { if(!res.ok) throw new Error(await res.text()); return res.json(); })
+      .then(data => { setSpanish(data); try { localStorage.setItem(cacheKey,JSON.stringify(data)); } catch {} })
+      .catch(() => setSpanish(null));
+  }, [language, poi.id]);
+
+  const displayShort = language === 'es' && spanish ? spanish.shortDescription : poi.shortDescription;
+  const displayLong = language === 'es' && spanish ? spanish.longDescription : poi.longDescription;
+  const displayFacts = language === 'es' && spanish ? spanish.facts : poi.facts;
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -144,7 +162,7 @@ export function POIBottomSheet({
         </div>
       )}
 
-      <p className="poi-description">{language === 'es' ? `Información sobre ${poi.name}. ${poi.shortDescription}` : poi.shortDescription}</p>
+      <p className="poi-description">{language === 'es' && !spanish ? 'Traduciendo…' : displayShort}</p>
 
       <div className="poi-actions four">
         <button onClick={listen}>
@@ -168,9 +186,9 @@ export function POIBottomSheet({
       {expanded && (
         <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <h3>{language === 'es' ? 'La historia' : 'The story'}</h3>
-          <p>{poi.longDescription}</p>
+          <p>{language === 'es' && !spanish ? 'Traduciendo…' : displayLong}</p>
           <h3>{language === 'es' ? 'Datos interesantes' : 'Quick facts'}</h3>
-          <ul>{poi.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
+          <ul>{(language === 'es' && !spanish ? [] : displayFacts).map(fact => <li key={fact}>{fact}</li>)}</ul>
           <h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (
