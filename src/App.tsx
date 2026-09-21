@@ -133,9 +133,10 @@ export default function App() {
     if (tourIndex < 0 || !activeTour[tourIndex]) return;
     const stop = activeTour[tourIndex];
     const text = narrationText(stop, language);
+    stopNaturalNarration();
     const timer = window.setTimeout(() => {
-      speakInstantNarration(text, advanceTour, language, getNarrationProgress());
-    }, tourIndex === 0 ? 150 : 80);
+      speakInstantNarration(text, advanceTour, language, 0);
+    }, 250);
     return () => window.clearTimeout(timer);
   }, [tourIndex, activeTour, language]);
 
@@ -193,7 +194,7 @@ export default function App() {
       </div>
     </section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.11.1</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.11.2</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} previousPOI={previousPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onPreviousPOI={()=>previousPOI&&setSelectedPOI(previousPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
