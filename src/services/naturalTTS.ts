@@ -1,18 +1,49 @@
 let speechToken = 0;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentProgress = 0;
+let narrationActive = false;
+let narrationPaused = false;
+
+function announce() {
+  window.dispatchEvent(new CustomEvent('smarttravel-speech-state',{detail:{active:narrationActive,paused:narrationPaused}}));
+}
 
 export function stopNaturalNarration() {
   speechToken += 1;
   currentUtterance = null;
   currentProgress = 0;
+  narrationActive = false;
+  narrationPaused = false;
   window.speechSynthesis?.cancel();
+  announce();
+}
+
+export function pauseNaturalNarration() {
+  if (!('speechSynthesis' in window) || !narrationActive) return;
+  window.speechSynthesis.pause();
+  narrationPaused = true;
+  announce();
+}
+
+export function resumeNaturalNarration() {
+  if (!('speechSynthesis' in window) || !narrationActive) return;
+  window.speechSynthesis.resume();
+  narrationPaused = false;
+  announce();
 }
 
 function chooseBrowserVoice(language:string) {
   const voices = window.speechSynthesis?.getVoices() || [];
-  if (language === 'es') return voices.find(v => /^es-(MX|US)/i.test(v.lang)) || voices.find(v => /^es-ES/i.test(v.lang)) || voices.find(v => v.lang.toLowerCase().startsWith('es'));
-  return voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name)) || voices.find(v => v.lang.toLowerCase().startsWith('en'));
+  if (language === 'es') {
+    const spanish = voices.filter(v => /^es([_-]|$)/i.test(v.lang));
+    return spanish.find(v => /^es[_-](MX|US|GT|419)$/i.test(v.lang))
+      || spanish.find(v => /Paulina|Mónica|Monica|Jorge|Juan|Diego|Luciana|Sofía|Sofia/i.test(v.name))
+      || spanish.find(v => /^es[_-]/i.test(v.lang))
+      || null;
+  }
+  return voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name))
+    || voices.find(v => v.lang.toLowerCase().startsWith('en'))
+    || null;
 }
 
 export function getNarrationProgress() { return currentProgress; }
@@ -30,10 +61,17 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   const utterance = new SpeechSynthesisUtterance(spokenText);
   currentUtterance = utterance;
   currentProgress = safeProgress;
+  narrationActive = true;
+  narrationPaused = false;
   utterance.lang = language === 'es' ? 'es-MX' : 'en-US';
-  utterance.rate = language === 'es' ? 0.98 : 1.04;
+  utterance.rate = language === 'es' ? 0.94 : 1.04;
+  utterance.pitch = 1;
   const preferred = chooseBrowserVoice(language);
-  if (preferred) utterance.voice = preferred;
+  if (preferred) {
+    utterance.voice = preferred;
+    utterance.lang = preferred.lang || utterance.lang;
+  }
+  announce();
   utterance.onboundary = event => {
     if (token !== speechToken) return;
     const local = Math.max(0, event.charIndex || 0);
@@ -43,11 +81,17 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
     if (token !== speechToken) return;
     currentUtterance = null;
     currentProgress = 1;
+    narrationActive = false;
+    narrationPaused = false;
+    announce();
     onEnd();
   };
   utterance.onerror = () => {
     if (token !== speechToken) return;
     currentUtterance = null;
+    narrationActive = false;
+    narrationPaused = false;
+    announce();
     onEnd();
   };
   window.speechSynthesis.speak(utterance);
