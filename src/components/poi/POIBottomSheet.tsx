@@ -73,7 +73,6 @@ export function POIBottomSheet({
   const [expanded, setExpanded] = useState(false);
   const [spanish, setSpanish] = useState<{shortDescription:string;longDescription:string;facts:string[]}|null>(null);
   useEffect(() => {
-    if (language !== 'es') return;
     const cacheKey = `smarttravel-es-${poi.id}`;
     try {
       const cached = localStorage.getItem(cacheKey);
@@ -84,7 +83,7 @@ export function POIBottomSheet({
       .then(async res => { if(!res.ok) throw new Error(await res.text()); return res.json(); })
       .then(data => { setSpanish(data); try { localStorage.setItem(cacheKey,JSON.stringify(data)); } catch {} })
       .catch(() => setSpanish(null));
-  }, [language, poi.id]);
+  }, [poi.id]);
 
   const displayShort = language === 'es' && spanish ? spanish.shortDescription : poi.shortDescription;
   const displayLong = language === 'es' && spanish ? spanish.longDescription : poi.longDescription;
@@ -105,7 +104,8 @@ export function POIBottomSheet({
   useEffect(() => {
     if (!speaking) return;
     const progress = getNarrationProgress();
-    const text = buildNarration(poi, language);
+    const narrationPOI = language === 'es' && spanish ? {...poi, shortDescription: spanish.shortDescription, longDescription: spanish.longDescription, facts: spanish.facts} : poi;
+    const text = buildNarration(narrationPOI, language);
     speakInstantNarration(text, () => setSpeaking(false), language, progress);
   }, [language]);
 
@@ -117,7 +117,8 @@ export function POIBottomSheet({
       return;
     }
 
-    const text = buildNarration(poi, language);
+    const narrationPOI = language === 'es' && spanish ? {...poi, shortDescription: spanish.shortDescription, longDescription: spanish.longDescription, facts: spanish.facts} : poi;
+    const text = buildNarration(narrationPOI, language);
     setSpeaking(true);
 
     speakInstantNarration(text, () => setSpeaking(false), language);
