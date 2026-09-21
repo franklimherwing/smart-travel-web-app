@@ -185,7 +185,7 @@ export default function App() {
         <button className="ask-me-button" onClick={()=>setShowChat(true)}><span>✦</span><strong>{language==='es'?'Pregúntame':'Ask Me'}</strong></button>
         <button onClick={openTour}>⏱️ <strong>{language==='es'?'Tour 30 min':'30 min Tour'}</strong></button>
         <button onClick={()=>setShowExplore(true)}>📍 <strong>{language==='es'?'Explorar':'Explore'}</strong></button>
-        <button className="more-button" onClick={()=>setShowVoiceMenu(false) || document.body.classList.toggle('quick-more-open')}>•••</button>
+        <button className="more-button" onClick={()=>{setShowVoiceMenu(false);document.body.classList.toggle('quick-more-open')}}>•••</button>
       </div>
       <div className="quick-more-menu">
         <button onClick={()=>{setShowChat(true);document.body.classList.remove('quick-more-open')}}>📖 {language==='es'?'Cuéntame una historia':'Tell me a story'}</button>
@@ -193,7 +193,7 @@ export default function App() {
       </div>
     </section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.11.0</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.11.1</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
     <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} previousPOI={previousPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onPreviousPOI={()=>previousPOI&&setSelectedPOI(previousPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
