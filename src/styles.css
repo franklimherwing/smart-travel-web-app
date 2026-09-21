@@ -738,3 +738,11 @@ button:active { transform: scale(.96); }
 
 /* v0.9.9 centered signature */
 .app-signature{left:50%;right:auto;transform:translateX(-50%);justify-content:center}
+
+
+/* v0.10.2 quick map category rail */
+.category-rail{position:absolute;z-index:1000;right:12px;top:185px;display:flex;flex-direction:column;gap:7px}
+.category-rail button{width:58px;min-height:52px;border:1px solid rgba(26,26,26,.08);border-radius:15px;background:rgba(250,250,247,.95);box-shadow:0 4px 14px rgba(26,26,26,.13);backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer}
+.category-rail button span{font-size:20px;line-height:1.1}.category-rail button small{font-size:9px;font-weight:850;line-height:1.05;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.category-rail button.active{background:#0F766E;color:white;border-color:#0F766E}
+@media(max-width:520px){.category-rail{right:8px;top:182px;gap:5px}.category-rail button{width:52px;min-height:48px;border-radius:14px}.category-rail button span{font-size:18px}.category-rail button small{font-size:8px;max-width:47px}.map-controls{right:10px;bottom:185px}}
