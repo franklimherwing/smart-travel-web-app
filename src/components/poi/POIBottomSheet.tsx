@@ -65,6 +65,7 @@ export function POIBottomSheet({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [resumeAfterLanguageSwitch, setResumeAfterLanguageSwitch] = useState(false);
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -79,9 +80,17 @@ export function POIBottomSheet({
   }, [poi.id, tourActive]);
 
   useEffect(() => {
-    if (!speaking) return;
-    stopNaturalNarration();
-    setSpeaking(false);
+    if (!speaking && !resumeAfterLanguageSwitch) return;
+    if (speaking) {
+      stopNaturalNarration();
+      setSpeaking(false);
+      setResumeAfterLanguageSwitch(true);
+      return;
+    }
+    const text = buildNarration(poi, language);
+    setResumeAfterLanguageSwitch(false);
+    setSpeaking(true);
+    speakInstantNarration(text, () => setSpeaking(false), language);
   }, [language]);
 
   const listen = async () => {
