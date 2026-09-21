@@ -73,6 +73,10 @@ export function POIBottomSheet({
   const [expanded, setExpanded] = useState(false);
   const [spanish, setSpanish] = useState<{shortDescription:string;longDescription:string;facts:string[]}|null>(null);
   useEffect(() => {
+    if (poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs) {
+      setSpanish({shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs});
+      return;
+    }
     const cacheKey = `smarttravel-es-${poi.id}`;
     try {
       const cached = localStorage.getItem(cacheKey);
