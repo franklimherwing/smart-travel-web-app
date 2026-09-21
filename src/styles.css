@@ -778,3 +778,16 @@ button:active { transform: scale(.96); }
 
 /* v0.10.7 Spanish unlocks only when every POI is ready */
 .language-pill button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.35)}
+
+
+/* v0.10.8 compact guide and top-right audio controls */
+.map-controls{top:max(14px,env(safe-area-inset-top));right:12px;bottom:auto;flex-direction:row;gap:8px}
+.top-bar{padding-right:112px}
+.voice-menu{top:max(72px,calc(env(safe-area-inset-top) + 58px));right:12px;bottom:auto}
+.ai-dock{left:12px;right:auto;bottom:max(18px,env(safe-area-inset-bottom));width:min(390px,calc(100% - 24px));display:flex;flex-direction:column-reverse;align-items:flex-start;gap:12px}
+.ai-bar.compact-guide{width:auto;min-width:112px;min-height:58px;border-radius:22px;grid-template-columns:42px auto;padding:8px 14px 8px 9px;gap:8px}
+.ai-bar.compact-guide .agent-orb{width:42px;height:42px}
+.ai-bar.compact-guide strong{font-family:inherit;font-size:16px;margin:0;white-space:nowrap}
+.suggestions{padding:0;gap:10px;max-width:calc(100vw - 24px)}
+.suggestions button{min-height:48px;padding:0 17px;font-size:15px;box-shadow:0 5px 16px rgba(26,26,26,.13)}
+@media(max-width:520px){.top-bar{padding-right:108px}.map-controls{right:8px}.icon-button,.round-button{min-width:46px;height:46px}.suggestions button{min-height:47px;padding:0 15px;font-size:14px}}
