@@ -11,7 +11,7 @@ export function stopNaturalNarration() {
 
 function chooseBrowserVoice(language:string) {
   const voices = window.speechSynthesis?.getVoices() || [];
-  if (language === 'es') return voices.find(v => /^es-(GT|MX|US|419)/i.test(v.lang)) || voices.find(v => v.lang.toLowerCase().startsWith('es'));
+  if (language === 'es') return voices.find(v => /^es-(MX|US)/i.test(v.lang)) || voices.find(v => /^es-ES/i.test(v.lang)) || voices.find(v => v.lang.toLowerCase().startsWith('es'));
   return voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name)) || voices.find(v => v.lang.toLowerCase().startsWith('en'));
 }
 
@@ -30,8 +30,8 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   const utterance = new SpeechSynthesisUtterance(spokenText);
   currentUtterance = utterance;
   currentProgress = safeProgress;
-  utterance.lang = language === 'es' ? 'es-GT' : 'en-US';
-  utterance.rate = 1.04;
+  utterance.lang = language === 'es' ? 'es-MX' : 'en-US';
+  utterance.rate = language === 'es' ? 0.98 : 1.04;
   const preferred = chooseBrowserVoice(language);
   if (preferred) utterance.voice = preferred;
   utterance.onboundary = event => {
