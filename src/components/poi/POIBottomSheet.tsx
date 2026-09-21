@@ -89,6 +89,7 @@ export function POIBottomSheet({
       .catch(() => setSpanish(null));
   }, [poi.id]);
 
+  const displayName = language === 'es' && poi.nameEs ? poi.nameEs : poi.name;
   const displayShort = language === 'es' && spanish ? spanish.shortDescription : poi.shortDescription;
   const displayLong = language === 'es' && spanish ? spanish.longDescription : poi.longDescription;
   const displayFacts = language === 'es' && spanish ? spanish.facts : poi.facts;
@@ -150,7 +151,7 @@ export function POIBottomSheet({
         <div className="poi-hero-icon" aria-hidden="true">{poi.emoji}</div>
         <div>
           <span className="poi-category">{language === 'es' ? spanishText(poi.category) : poi.category}</span>
-          <h2>{poi.name}</h2>
+          <h2>{displayName}</h2>
           <p className="poi-distance">
             {distance !== null ? formatDistance(distance) : (language === 'es' ? 'Distancia disponible con GPS' : 'Distance available with GPS')}
             {walkMinutes ? (language === 'es' ? ` · aprox. ${walkMinutes} min caminando` : ` · about ${walkMinutes} min walk`) : ''}
@@ -208,7 +209,7 @@ export function POIBottomSheet({
           <span>🧭</span>
           <div>
             <small>{language === 'es' ? 'PRÓXIMA PARADA CERCANA' : 'NEXT NEARBY STOP'}</small>
-            <strong>{nextPOI.emoji} {nextPOI.name}</strong>
+            <strong>{nextPOI.emoji} {language === 'es' && nextPOI.nameEs ? nextPOI.nameEs : nextPOI.name}</strong>
             <em>{language === 'es' ? 'Toca para ir allí y abrir su historia' : 'Tap to fly there and open its story'}</em>
           </div>
           <b>→</b>
