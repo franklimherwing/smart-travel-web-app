@@ -762,3 +762,9 @@ button:active { transform: scale(.96); }
 /* v0.10.4 global narration play/stop */
 .global-speech-control{position:absolute;z-index:1600;right:14px;bottom:max(18px,env(safe-area-inset-bottom));width:56px;height:56px;border:0;border-radius:50%;background:#1A1A1A;color:white;box-shadow:0 8px 24px rgba(26,26,26,.28);font-size:22px;font-weight:900;display:grid;place-items:center;cursor:pointer}
 .global-speech-control:active{transform:scale(.96)}
+
+
+/* v0.10.5 previous/next POI navigation */
+.poi-skip-nav{position:sticky;bottom:8px;z-index:24;margin:16px auto 6px;width:max-content;display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:999px;background:rgba(250,250,247,.96);box-shadow:0 6px 22px rgba(26,26,26,.18);backdrop-filter:blur(12px)}
+.poi-skip-nav button{width:48px;height:42px;border:0;border-radius:999px;background:#0F766E;color:white;font-size:25px;font-weight:900;cursor:pointer}
+.poi-skip-nav button:disabled{opacity:.35;cursor:default}.poi-skip-nav span{font-size:11px;font-weight:850;color:#65655f;min-width:72px;text-align:center}
