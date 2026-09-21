@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
 import type { UserPosition } from '../../hooks/useGeolocation';
-import { speakInstantNarration, stopNaturalNarration } from '../../services/naturalTTS';
+import { getNarrationProgress, speakInstantNarration, stopNaturalNarration } from '../../services/naturalTTS';
 
 function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
   const R = 6371000;
@@ -19,6 +19,12 @@ function formatDistance(meters:number) {
   return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km away`;
 }
 
+function spanishText(text:string) {
+  const dictionary:Record<string,string> = {
+    'history':'historia','architecture':'arquitectura','art':'arte','religion':'religión','landmark':'lugar emblemático','nature':'naturaleza','food':'comida','culture':'cultura'
+  };
+  return dictionary[text.toLowerCase()] || text;
+}
 function buildNarration(poi: POI, language:string) {
   if (language === 'es') return `Bienvenido a ${poi.name}. ${poi.shortDescription} ${poi.longDescription} Datos interesantes: ${poi.facts.join('. ')}. Disfruta explorando este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
@@ -80,8 +86,9 @@ export function POIBottomSheet({
 
   useEffect(() => {
     if (!speaking) return;
+    const progress = getNarrationProgress();
     const text = buildNarration(poi, language);
-    speakInstantNarration(text, () => setSpeaking(false), language);
+    speakInstantNarration(text, () => setSpeaking(false), language, progress);
   }, [language]);
 
   const listen = async () => {
@@ -119,11 +126,11 @@ export function POIBottomSheet({
       <div className="poi-title-row">
         <div className="poi-hero-icon" aria-hidden="true">{poi.emoji}</div>
         <div>
-          <span className="poi-category">{poi.category}</span>
+          <span className="poi-category">{language === 'es' ? spanishText(poi.category) : poi.category}</span>
           <h2>{poi.name}</h2>
           <p className="poi-distance">
-            {distance !== null ? formatDistance(distance) : 'Distance available with GPS'}
-            {walkMinutes ? ` · about ${walkMinutes} min walk` : ''}
+            {distance !== null ? formatDistance(distance) : (language === 'es' ? 'Distancia disponible con GPS' : 'Distance available with GPS')}
+            {walkMinutes ? (language === 'es' ? ` · aprox. ${walkMinutes} min caminando` : ` · about ${walkMinutes} min walk`) : ''}
           </p>
         </div>
       </div>
@@ -133,38 +140,38 @@ export function POIBottomSheet({
       ) : (
         <div className="poi-photo-placeholder" aria-hidden="true">
           <span>{poi.emoji}</span>
-          <small>Photo coming soon</small>
+          <small>{language === 'es' ? 'Foto próximamente' : 'Photo coming soon'}</small>
         </div>
       )}
 
-      <p className="poi-description">{poi.shortDescription}</p>
+      <p className="poi-description">{language === 'es' ? `Información sobre ${poi.name}. ${poi.shortDescription}` : poi.shortDescription}</p>
 
       <div className="poi-actions four">
         <button onClick={listen}>
           <span>{speaking ? '⏸' : '🎧'}</span>
-          <strong>{speaking ? 'Stop' : 'Listen'}</strong>
+          <strong>{speaking ? (language === 'es' ? 'Detener' : 'Stop') : (language === 'es' ? 'Escuchar' : 'Listen')}</strong>
         </button>
         <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
-          <strong>{expanded ? 'Less' : 'Full Story'}</strong>
+          <strong>{expanded ? (language === 'es' ? 'Menos' : 'Less') : (language === 'es' ? 'Historia' : 'Full Story')}</strong>
         </button>
         <button onClick={onAskAI}>
           <span>✦</span>
-          <strong>Ask AI</strong>
+          <strong>{language === 'es' ? 'Preguntar IA' : 'Ask AI'}</strong>
         </button>
         <button onClick={directions}>
           <span>↗</span>
-          <strong>Directions</strong>
+          <strong>{language === 'es' ? 'Cómo llegar' : 'Directions'}</strong>
         </button>
       </div>
 
       {expanded && (
         <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <h3>The story</h3>
+          <h3>{language === 'es' ? 'La historia' : 'The story'}</h3>
           <p>{poi.longDescription}</p>
-          <h3>Quick facts</h3>
+          <h3>{language === 'es' ? 'Datos interesantes' : 'Quick facts'}</h3>
           <ul>{poi.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
-          <h3>Sources</h3>
+          <h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (
               <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
@@ -177,16 +184,16 @@ export function POIBottomSheet({
         <button className="next-stop-card next-stop-button" onClick={onNextPOI}>
           <span>🧭</span>
           <div>
-            <small>NEXT NEARBY STOP</small>
+            <small>{language === 'es' ? 'PRÓXIMA PARADA CERCANA' : 'NEXT NEARBY STOP'}</small>
             <strong>{nextPOI.emoji} {nextPOI.name}</strong>
-            <em>Tap to fly there and open its story</em>
+            <em>{language === 'es' ? 'Toca para ir allí y abrir su historia' : 'Tap to fly there and open its story'}</em>
           </div>
           <b>→</b>
         </button>
       )}
 
       <div className="poi-meta">
-        <span>📍 Trigger radius: {poi.triggerRadius} m</span>
+        <span>📍 {language === 'es' ? 'Radio de aviso' : 'Trigger radius'}: {poi.triggerRadius} m</span>
         <span>🗺️ {destinationName}</span>
       </div>
     </motion.section>
