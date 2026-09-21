@@ -746,3 +746,14 @@ button:active { transform: scale(.96); }
 .category-rail button span{font-size:20px;line-height:1.1}.category-rail button small{font-size:9px;font-weight:850;line-height:1.05;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .category-rail button.active{background:#0F766E;color:white;border-color:#0F766E}
 @media(max-width:520px){.category-rail{right:8px;top:182px;gap:5px}.category-rail button{width:52px;min-height:48px;border-radius:14px}.category-rail button span{font-size:18px}.category-rail button small{font-size:8px;max-width:47px}.map-controls{right:10px;bottom:185px}}
+
+
+/* v0.10.3 keep close controls visible while panel content scrolls */
+.poi-sheet{position:absolute;overflow:auto}
+.poi-sheet .sheet-close,.poi-sheet .favorite-corner{position:sticky;z-index:25;float:right;top:2px}
+.poi-sheet .favorite-corner{right:auto;margin-right:6px}
+.poi-sheet .sheet-close{right:auto}
+.search-panel{max-height:calc(100dvh - 100px);overflow:auto}
+.search-row{position:sticky;top:0;z-index:20;background:#FAFAF7;padding-bottom:6px}
+.guide-chat header,.tour-overview header,.explore-panel header,.camera-guide header{position:sticky;top:0;z-index:30;background:#FAFAF7}
+.guide-chat header button,.tour-overview header button,.explore-panel header button,.camera-guide header button,.search-row button{position:relative;z-index:31;flex:0 0 auto}
