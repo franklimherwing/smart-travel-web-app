@@ -8,6 +8,7 @@ export interface POISource {
 export interface POI {
   id: string;
   name: string;
+  nameEs?: string;
   category: POICategory;
   emoji: string;
   lat: number;
