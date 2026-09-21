@@ -93,13 +93,7 @@ export function POIBottomSheet({
 
   useEffect(() => {
     setExpanded(false);
-    return () => {
-      if (!tourActive) {
-        stopNaturalNarration();
-        window.speechSynthesis?.cancel();
-      }
-    };
-  }, [poi.id, tourActive]);
+  }, [poi.id]);
 
   useEffect(() => {
     if (!speaking) return;
@@ -108,6 +102,12 @@ export function POIBottomSheet({
     const text = buildNarration(narrationPOI, language);
     speakInstantNarration(text, () => setSpeaking(false), language, progress);
   }, [language]);
+
+  useEffect(() => {
+    if (!speaking || tourActive) return;
+    const text = buildNarration(poi, language);
+    speakInstantNarration(text, () => setSpeaking(false), language);
+  }, [poi.id]);
 
   const listen = async () => {
     if (speaking) {
