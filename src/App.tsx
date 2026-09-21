@@ -13,12 +13,13 @@ import { romePOIs } from './data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from './data/guatemala-pois';
 import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
 import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from './data/expansion-pois';
-import { playNaturalNarration, preloadNaturalNarration } from './services/naturalTTS';
+import { speakInstantNarration, stopNaturalNarration } from './services/naturalTTS';
 import type { POI } from './types/poi';
 
 type Demo = 'rome' | 'guatemala' | 'zacapa';
 
-function narrationText(poi: POI) {
+function narrationText(poi: POI, language:string) {
+  if (language === 'es') return `${poi.name}. Bienvenido. Estás visitando un lugar especial. ${poi.facts.length ? `Dato interesante: ${poi.facts[0]}.` : ''}`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
 }
 
@@ -84,14 +85,7 @@ export default function App() {
     return ordered;
   }, [activePOIs, selectedPOI]);
 
-  const openTour = () => {
-    setShowTour(true);
-    const first = tourStops[0];
-    if (first) {
-      const tourVoice = language === 'es' ? 'spanish' : (voice === 'spanish' ? 'natural' : voice);
-      preloadNaturalNarration(narrationText(first), tourVoice, language).catch(()=>undefined);
-    }
-  };
+  const openTour = () => { setShowTour(true); };
 
   const startTour = () => {
     if (!tourStops.length) return;
@@ -114,21 +108,18 @@ export default function App() {
   useEffect(() => {
     if (tourIndex < 0 || !activeTour[tourIndex]) return;
     const stop = activeTour[tourIndex];
-    const text = narrationText(stop);
-    const narrationVoice = language === 'es' ? 'spanish' : (voice === 'spanish' ? 'natural' : voice);
+    const text = narrationText(stop, language);
     const timer = window.setTimeout(() => {
-      playNaturalNarration(text, advanceTour, narrationVoice, language).catch(() => browserFallback(text, advanceTour, language));
-      const nextStop = activeTour[tourIndex + 1];
-      if (nextStop) preloadNaturalNarration(narrationText(nextStop), narrationVoice, language).catch(()=>undefined);
-    }, tourIndex === 0 ? 1000 : 150);
+      speakInstantNarration(text, advanceTour, language);
+    }, tourIndex === 0 ? 150 : 80);
     return () => window.clearTimeout(timer);
-  }, [tourIndex, activeTour]);
+  }, [tourIndex, activeTour, language]);
 
   useEffect(() => {
     if (!audioMode || !nearbyPOI || autoNarratedId === nearbyPOI.id) return;
     setAutoNarratedId(nearbyPOI.id);
-    playNaturalNarration(narrationText(nearbyPOI), () => undefined, language === 'es' ? 'spanish' : (voice === 'spanish' ? 'natural' : voice), language).catch(() => browserFallback(narrationText(nearbyPOI)));
-  }, [audioMode, nearbyPOI, autoNarratedId]);
+    speakInstantNarration(narrationText(nearbyPOI, language), () => undefined, language);
+  }, [audioMode, nearbyPOI, autoNarratedId, language]);
 
   const openDemo = (nextDemo: Demo) => {
     setDemo(nextDemo); setSelectedPOI(null); setShowChat(false); setShowTour(false); setShowSearch(false); setShowExplore(false); setShowCamera(false); setDemoFocusKey(k => k + 1);
@@ -140,7 +131,7 @@ export default function App() {
       <button className="icon-button search-button" aria-label="Search" onClick={()=>setShowSearch(v=>!v)}>⌕</button><button className="icon-button" aria-label="Camera guide" onClick={()=>setShowCamera(true)}>📷</button>
       <div className="location-pill"><span className="eyebrow">EXPLORING</span><strong>{destinationName}</strong></div>
     </header>
-    <div className="walk-pill language-pill" aria-label="Guide language"><button className={language==='en'?'active':''} onClick={()=>setLanguage('en')}>English</button><button className={language==='es'?'active':''} onClick={()=>setLanguage('es')}>Español</button></div>
+    <div className="walk-pill language-pill" aria-label="Guide language"><button className={language==='en'?'active':''} onClick={()=>{stopNaturalNarration();setLanguage('en')}}>English</button><button className={language==='es'?'active':''} onClick={()=>{stopNaturalNarration();setLanguage('es')}}>Español</button></div>
     <nav className="demo-switcher" aria-label="Demo destinations">
       <button className={demo==='rome'?'active':''} onClick={()=>openDemo('rome')}>🏛️ Rome</button>
       <button className={demo==='guatemala'?'active':''} onClick={()=>openDemo('guatemala')}>🇬🇹 Guatemala City</button>
@@ -154,10 +145,10 @@ export default function App() {
     <AnimatePresence>{showSearch && <SearchPanel pois={activePOIs} query={searchQuery} onQuery={setSearchQuery} onClose={()=>setShowSearch(false)} onSelect={poi=>{setSelectedPOI(poi);setShowSearch(false);}} />}</AnimatePresence>
     <AnimatePresence>{showNearby && <motion.section className="nearby-alert" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} exit={{opacity:0,y:18}}><button className="nearby-dismiss" onClick={()=>setDismissedNearbyId(nearbyPOI.id)}>×</button><span className="nearby-icon">{nearbyPOI.emoji}</span><div><small>YOU'RE NEARBY</small><strong>{nearbyPOI.name}</strong><p>{audioMode?'Audio mode will narrate this stop.':'Want to hear the story?'}</p></div><button className="nearby-open" onClick={()=>setSelectedPOI(nearbyPOI)}>Open</button></motion.section>}</AnimatePresence>
     {!selectedPOI && !showNearby && !showChat && !showTour && !showExplore && !showCamera && <section className="ai-dock"><button className="ai-bar" onClick={()=>setShowChat(true)}><span className="agent-orb">✦</span><span><small>YOUR LOCAL GUIDE</small><strong>{position ? 'Ask what’s around me' : 'Ask about this area'}</strong></span><span className="mic">🎙️</span></button><div className="suggestions"><button onClick={()=>setShowExplore(true)}>📍 Explore</button><button onClick={openTour}>30-min tour</button><button onClick={()=>setShowCamera(true)}>📷 Camera AI</button><button onClick={()=>setShowChat(true)}>Tell me a story</button></div></section>}
-    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.2</span></div>
+    <div className="app-signature"><span>Smart AI Travel by Franklim Herwing</span><span>v0.9.3</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide onClose={()=>setShowCamera(false)} onAsk={()=>{setShowCamera(false);setShowChat(true)}} />}</AnimatePresence>
-    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} />}</AnimatePresence>
+    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
     <AnimatePresence>{showChat && <GuideChat context={{destination:destinationName,poiName:selectedPOI?.name,poiSummary:selectedPOI?.longDescription,latitude:position?.lat,longitude:position?.lng}} onClose={()=>setShowChat(false)} />}</AnimatePresence>
     <AnimatePresence>{showTour && <TourOverview stops={tourStops} onClose={()=>setShowTour(false)} onStart={startTour} />}</AnimatePresence>
   </main>;
