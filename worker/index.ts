@@ -40,6 +40,19 @@ async function translateNarration(text:string, language:string, env:Env) {
   return extractText(data) || text;
 }
 
+async function translatePOI(req: Request, env: Env) {
+  if (!env.OPENAI_API_KEY) return new Response('OPENAI_API_KEY is not configured.', { status: 503 });
+  const { name, shortDescription, longDescription, facts = [] } = await req.json() as any;
+  const input = JSON.stringify({name,shortDescription,longDescription,facts});
+  const prompt = `Translate this travel-place content completely into natural Latin American Spanish. Keep the place name unchanged. Return ONLY valid JSON with exactly these keys: shortDescription (string), longDescription (string), facts (array of strings). No markdown and no English except proper names. Content: ${input}`;
+  const response = await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:prompt,max_output_tokens:1400})});
+  if(!response.ok) return new Response(await response.text(),{status:response.status});
+  const data:any=await response.json();
+  const raw=extractText(data).replace(/^\`\`\`json\s*/i,'').replace(/\`\`\`$/,'').trim();
+  try { return Response.json(JSON.parse(raw),{headers:{'Cache-Control':'public, max-age=86400'}}); }
+  catch { return new Response('Translation returned invalid JSON.',{status:502}); }
+}
+
 async function tts(req: Request, env: Env) {
   if (!env.OPENAI_API_KEY) return new Response('OPENAI_API_KEY is not configured.', { status: 503 });
   const { text, voice='natural', language='en' } = await req.json() as any;
@@ -58,6 +71,7 @@ export default {
     try {
       if (url.pathname==='/api/guide') return request.method==='POST' ? guide(request,env) : new Response('Method not allowed',{status:405});
       if (url.pathname==='/api/tts') return request.method==='POST' ? tts(request,env) : new Response('Method not allowed',{status:405});
+      if (url.pathname==='/api/translate-poi') return request.method==='POST' ? translatePOI(request,env) : new Response('Method not allowed',{status:405});
       return env.ASSETS.fetch(request);
     } catch (error) {
       return new Response(error instanceof Error ? error.message : 'Worker error',{status:500});
