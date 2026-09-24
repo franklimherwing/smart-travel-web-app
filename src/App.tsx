@@ -58,6 +58,7 @@ export default function App() {
   const [showCamera, setShowCamera] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [chatPrompt, setChatPrompt] = useState('');
+  const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem('smarttravel-welcomed') !== '1');
   const [searchQuery, setSearchQuery] = useState('');
   const [mapFilter, setMapFilter] = useState<MapFilter>('all');
   const [activeTour, setActiveTour] = useState<POI[]>([]);
@@ -158,6 +159,7 @@ export default function App() {
   };
 
   return <main className="app-shell">
+    {showWelcome && <section className="welcome-card"><div className="welcome-icon">✦</div><h1>Smart AI Travel</h1><p>{language==='es'?'Tu guía para explorar a tu ritmo.':'Your guide for exploring at your own pace.'}</p><ul><li>{language==='es'?'Explora Roma, Ciudad de Guatemala y Zacapa.':'Explore Rome, Guatemala City, and Zacapa.'}</li><li>{language==='es'?'Toca un marcador para conocer su historia.':'Tap a marker to discover its story.'}</li><li>{language==='es'?'Pregunta al guía o inicia un tour de 30 minutos.':'Ask the guide or start a 30-minute tour.'}</li></ul><button onClick={()=>{localStorage.setItem('smarttravel-welcomed','1');setShowWelcome(false)}}>{language==='es'?'Comenzar a explorar':'Start exploring'}</button></section>}
     <TravelMap position={position} onSelectPOI={setSelectedPOI} demo={demo} demoFocusKey={demoFocusKey} focusedPOI={selectedPOI} filteredPOIs={filteredPOIs} />
     <header className="top-bar" aria-label="Map tools">
       <button className="icon-button search-button" aria-label="Search" onClick={()=>setShowSearch(v=>!v)}>⌕</button><button className="icon-button" aria-label="Camera guide" onClick={()=>setShowCamera(true)}>📷</button>
