@@ -881,3 +881,6 @@ button:active { transform: scale(.96); }
  .explore-panel,.camera-guide,.guide-chat,.tour-overview{inset:8px;top:max(8px,env(safe-area-inset-top));bottom:max(8px,env(safe-area-inset-bottom));border-radius:22px}
  .explore-filters{padding:10px 12px}
 }
+
+.welcome-card{position:absolute;z-index:2000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,calc(100% - 28px));padding:28px;border-radius:28px;background:#FAFAF7;box-shadow:0 20px 70px rgba(26,26,26,.32)}
+.welcome-card h1{font-family:Georgia,'Times New Roman',serif;margin:6px 0 8px;font-size:30px}.welcome-card p{font-size:17px}.welcome-card ul{padding-left:22px;line-height:1.55}.welcome-card li{margin:8px 0}.welcome-card>button{width:100%;min-height:52px;border:0;border-radius:16px;background:#0F766E;color:white;font-weight:900}.welcome-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#0F766E;color:white;font-size:25px}
