@@ -1,22 +1,2 @@
-export interface GuideContext {
-  destination: string;
-  poiName?: string;
-  poiSummary?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-export async function askGuide(message: string, context: GuideContext): Promise<string> {
-  const response = await fetch('/api/guide', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, context }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await response.text() || 'The AI guide is unavailable.');
-  }
-
-  const data = await response.json();
-  return data.text || 'I could not generate a response.';
-}
+export interface GuideContext {destination:string;poiName?:string;poiSummary?:string;latitude?:number;longitude?:number;language?:string;}
+export async function askGuide(message:string,context:GuideContext):Promise<string>{let last:Error|null=null;for(let attempt=0;attempt<2;attempt++){try{const response=await fetch('/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,context})});if(!response.ok)throw new Error('Guide unavailable');const data=await response.json() as {text?:string};if(data.text?.trim())return data.text.trim();throw new Error('Empty guide response')}catch(e){last=e instanceof Error?e:new Error('Guide unavailable')}}throw last??new Error('Guide unavailable')}
