@@ -16,6 +16,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/translate-poi"
+  to = "/.netlify/functions/translate-poi"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

@@ -59,12 +59,28 @@ export function POIBottomSheet({
   const [loadingSpeech, setLoadingSpeech] = useState(false);
   const [notice, setNotice] = useState('');
   const [expanded, setExpanded] = useState(false);
-  const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : null;
+  const [translation, setTranslation] = useState<Partial<POI> | null>(null);
+  const [translationError, setTranslationError] = useState(false);
+  const [speechError, setSpeechError] = useState(false);
+  const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : translation?.shortDescriptionEs && translation?.longDescriptionEs && translation?.factsEs ? {shortDescription:translation.shortDescriptionEs,longDescription:translation.longDescriptionEs,facts:translation.factsEs} : null;
 
-  const displayName = language === 'es' && poi.nameEs ? poi.nameEs : poi.name;
-  const displayShort = language === 'es' ? (spanish?.shortDescription ?? poi.shortDescription) : poi.shortDescription;
-  const displayLong = language === 'es' ? (spanish?.longDescription ?? poi.longDescription) : poi.longDescription;
-  const displayFacts = language === 'es' ? (spanish?.facts ?? poi.facts) : poi.facts;
+  useEffect(() => {
+    setTranslation(null); setTranslationError(false);
+    if (language !== 'es' || (poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs)) return;
+    let cancelled = false;
+    const cacheKey = `smarttravel-es-v1:${poi.id}`;
+    try { const cached = localStorage.getItem(cacheKey); if (cached) { setTranslation(JSON.parse(cached)); return; } } catch { /* Fetch a fresh translation. */ }
+    fetch('/api/translate-poi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:poi.name,shortDescription:poi.shortDescription,longDescription:poi.longDescription,facts:poi.facts})})
+      .then(async response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); })
+      .then(result => { if (cancelled) return; setTranslation(result); try { localStorage.setItem(cacheKey,JSON.stringify(result)); } catch { /* Storage may be full. */ } })
+      .catch(() => { if (!cancelled) setTranslationError(true); });
+    return () => { cancelled = true; };
+  }, [poi.id, language]);
+
+  const displayName = language === 'es' ? (poi.nameEs ?? translation?.nameEs ?? poi.name) : poi.name;
+  const displayShort = language === 'es' ? (spanish?.shortDescription ?? (translationError ? 'Descripción en español no disponible.' : 'Traduciendo descripción…')) : poi.shortDescription;
+  const displayLong = language === 'es' ? (spanish?.longDescription ?? (translationError ? 'Historia en español no disponible.' : 'Traduciendo historia…')) : poi.longDescription;
+  const displayFacts = language === 'es' ? (spanish?.facts ?? []) : poi.facts;
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -84,8 +100,13 @@ export function POIBottomSheet({
   }, [poi.id]);
 
   useEffect(() => {
+    if (spanish) setNotice(current => current === 'Traduciendo para el audio…' ? '' : current);
+  }, [spanish?.shortDescription]);
+
+  useEffect(() => {
     if (!speaking) return;
     const progress = getNarrationProgress();
+    if (language === 'es' && !spanish) return;
     const narrationPOI = language === 'es' && spanish ? {...poi, shortDescription: spanish.shortDescription, longDescription: spanish.longDescription, facts: spanish.facts} : poi;
     const text = buildNarration(narrationPOI, language);
     speakInstantNarration(text, () => setSpeaking(false), language, progress);
@@ -93,6 +114,7 @@ export function POIBottomSheet({
 
   useEffect(() => {
     if (!speaking || tourActive) return;
+    if (language === 'es' && !spanish) return;
     const text = buildNarration(poi, language);
     speakInstantNarration(text, () => setSpeaking(false), language);
   }, [poi.id]);
@@ -105,13 +127,16 @@ export function POIBottomSheet({
       return;
     }
 
+    if (language === 'es' && !spanish) { setNotice(translationError ? 'Audio no disponible: falta la traducción.' : 'Traduciendo para el audio…'); return; }
+
     const narrationPOI = language === 'es' && spanish ? {...poi, shortDescription: spanish.shortDescription, longDescription: spanish.longDescription, facts: spanish.facts} : poi;
     const text = buildNarration(narrationPOI, language);
     if (!('speechSynthesis' in window)) { setNotice(language==='es'?'Audio no disponible en este navegador.':'Audio is unavailable in this browser.'); return; }
     setNotice('');
+    setSpeechError(false);
     setSpeaking(true);
     setLoadingSpeech(true);
-    speakInstantNarration(text, () => setSpeaking(false), language);
+    speakInstantNarration(text, () => setSpeaking(false), language, 0, () => { setSpeechError(true); setNotice(language==='es'?'No se pudo iniciar el audio. Comprueba el volumen o prueba otro navegador.':'Audio could not start. Check your volume or try another browser.'); });
   };
 
   const directions = () => {
@@ -159,9 +184,9 @@ export function POIBottomSheet({
       <p className="poi-description">{displayShort}</p>
 
       <div className="poi-actions four">
-        <button onClick={listen} aria-live="polite">
-          <span>{speaking ? '⏸' : '🎧'}</span>
-          <strong>{loadingSpeech ? (language === 'es' ? 'Cargando…' : 'Loading…') : speaking ? (language === 'es' ? 'Detener' : 'Stop') : (language === 'es' ? 'Escuchar' : 'Listen')}</strong>
+        <button onClick={listen} aria-live="polite" aria-busy={loadingSpeech} className={speaking ? 'listening' : ''}>
+          <span>{loadingSpeech ? '◌' : speaking ? '⏹' : '🎧'}</span>
+          <strong>{loadingSpeech ? (language === 'es' ? 'Cargando audio…' : 'Loading audio…') : speaking ? (language === 'es' ? 'Reproduciendo · detener' : 'Playing · stop') : speechError ? (language === 'es' ? 'Reintentar audio' : 'Retry audio') : (language === 'es' ? 'Escuchar' : 'Listen')}</strong>
         </button>
         <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
@@ -184,7 +209,7 @@ export function POIBottomSheet({
           <h3>{language === 'es' ? 'La historia' : 'The story'}</h3>
           <p>{displayLong}</p>
           <h3>{language === 'es' ? 'Datos interesantes' : 'Quick facts'}</h3>
-          <ul>{displayFacts.map(fact => <li key={fact}>{fact}</li>)}</ul>
+          {displayFacts.length ? <ul>{displayFacts.map(fact => <li key={fact}>{fact}</li>)}</ul> : <p>{language === 'es' ? (translationError ? 'Datos en español no disponibles.' : 'Traduciendo datos…') : ''}</p>}
           <h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (

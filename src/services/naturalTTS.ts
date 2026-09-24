@@ -52,11 +52,11 @@ function chooseBrowserVoice(language:string) {
 
 export function getNarrationProgress() { return currentProgress; }
 
-export function speakInstantNarration(text:string,onEnd:()=>void,language=localStorage.getItem('smarttravel-language')||'en',startProgress=0) {
+export function speakInstantNarration(text:string,onEnd:()=>void,language=localStorage.getItem('smarttravel-language')||'en',startProgress=0,onError?:()=>void) {
   speechToken += 1;
   const token = speechToken;
   window.speechSynthesis?.cancel();
-  if (!('speechSynthesis' in window)) { announce(); onEnd(); return; }
+  if (!('speechSynthesis' in window)) { announce(); onError?.(); onEnd(); return; }
 
   const safeProgress = Math.max(0, Math.min(.96, startProgress));
   const startIndex = Math.floor(text.length * safeProgress);
@@ -77,7 +77,8 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
     utterance.lang = preferred.lang || utterance.lang;
   }
   announce();
-  utterance.onstart = () => { if (token !== speechToken) return; narrationLoading = false; announce(); };
+  const startupTimeout = window.setTimeout(() => { if (token !== speechToken || !narrationLoading) return; stopNaturalNarration(); onError?.(); onEnd(); }, 7000);
+  utterance.onstart = () => { if (token !== speechToken) return; clearTimeout(startupTimeout); narrationLoading = false; announce(); };
   utterance.onboundary = event => {
     if (token !== speechToken) return;
     const local = Math.max(0, event.charIndex || 0);
@@ -85,6 +86,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   };
   utterance.onend = () => {
     if (token !== speechToken) return;
+    clearTimeout(startupTimeout);
     currentUtterance = null;
     currentProgress = 1;
     narrationActive = false;
@@ -95,12 +97,14 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   };
   utterance.onerror = () => {
     if (token !== speechToken) return;
+    clearTimeout(startupTimeout);
     currentUtterance = null;
     narrationActive = false;
     narrationPaused = false;
     narrationLoading = false;
     announce();
+    onError?.();
     onEnd();
   };
-  window.speechSynthesis.speak(utterance);
+  try { window.speechSynthesis.speak(utterance); } catch { clearTimeout(startupTimeout); stopNaturalNarration(); onError?.(); onEnd(); }
 }
