@@ -1,4 +1,4 @@
-const CACHE = 'smart-travel-v0.12.1';
+const CACHE = 'smart-travel-v0.12.2';
 const CORE = ['/', '/index.html', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {
