@@ -884,3 +884,8 @@ button:active { transform: scale(.96); }
 
 .welcome-card{position:absolute;z-index:2000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,calc(100% - 28px));padding:28px;border-radius:28px;background:#FAFAF7;box-shadow:0 20px 70px rgba(26,26,26,.32)}
 .welcome-card h1{font-family:Georgia,'Times New Roman',serif;margin:6px 0 8px;font-size:30px}.welcome-card p{font-size:17px}.welcome-card ul{padding-left:22px;line-height:1.55}.welcome-card li{margin:8px 0}.welcome-card>button{width:100%;min-height:52px;border:0;border-radius:16px;background:#0F766E;color:white;font-weight:900}.welcome-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#0F766E;color:white;font-size:25px}
+
+/* Keep the release credit clear of the four mobile dock actions. */
+.app-signature:not(.panel-open){bottom:calc(max(16px,env(safe-area-inset-bottom)) + 72px);max-width:calc(100vw - 20px);font-size:10px}
+@media(max-width:520px){.app-signature:not(.panel-open){bottom:calc(max(18px,env(safe-area-inset-bottom)) + 66px);font-size:9px}}
+.poi-notice{margin:10px 4px;padding:10px 12px;border-radius:10px;background:#fff4da;color:#654600;font-size:13px;line-height:1.4}
