@@ -14,9 +14,10 @@ function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
   return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
 }
 
-function formatDistance(meters:number) {
-  if (meters < 1000) return `${Math.round(meters)} m away`;
-  return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km away`;
+function formatDistance(meters:number,language:string) {
+  if (meters < 1000) return language==='es' ? `${Math.round(meters)} m` : `${Math.round(meters)} m away`;
+  const value=(meters/1000).toFixed(meters<10000?1:0);
+  return language==='es' ? `${value} km` : `${value} km away`;
 }
 
 function spanishText(text:string) {
@@ -75,14 +76,7 @@ export function POIBottomSheet({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [spanish, setSpanish] = useState<{shortDescription:string;longDescription:string;facts:string[]}|null>(null);
-  useEffect(() => {
-    if (poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs) {
-      setSpanish({shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs});
-    } else {
-      setSpanish(null);
-    }
-  }, [poi.id, poi.shortDescriptionEs, poi.longDescriptionEs, poi.factsEs]);
+  const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : null;
 
   const displayName = language === 'es' && poi.nameEs ? poi.nameEs : poi.name;
   const displayShort = language === 'es' ? (spanish?.shortDescription ?? poi.shortDescription) : poi.shortDescription;
@@ -125,6 +119,10 @@ export function POIBottomSheet({
   };
 
   const directions = () => {
+    if (!position) {
+      const ok=window.confirm(language==='es'?'GPS no está disponible. Google Maps se abrirá solo con el destino. ¿Continuar?':'GPS is unavailable. Google Maps will open with the destination only. Continue?');
+      if(!ok)return;
+    }
     const url = `https://www.google.com/maps/dir/?api=1&destination=${poi.lat},${poi.lng}&travelmode=walking`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -148,7 +146,7 @@ export function POIBottomSheet({
           <span className="poi-category">{language === 'es' ? spanishText(poi.category) : poi.category}</span>
           <h2>{displayName}</h2>
           <p className="poi-distance">
-            {distance !== null ? formatDistance(distance) : (language === 'es' ? 'Distancia disponible con GPS' : 'Distance available with GPS')}
+            {distance !== null ? formatDistance(distance, language) : (language === 'es' ? 'Distancia disponible con GPS' : 'Distance available with GPS')}
             {walkMinutes ? (language === 'es' ? ` · aprox. ${walkMinutes} min caminando` : ` · about ${walkMinutes} min walk`) : ''}
           </p>
         </div>
@@ -212,7 +210,7 @@ export function POIBottomSheet({
       )}
 
       <div className="poi-meta">
-        <span>📍 {language === 'es' ? 'Radio de aviso' : 'Trigger radius'}: {poi.triggerRadius} m</span>
+        {position && <span>📍 {language === 'es' ? 'Radio de aviso' : 'Trigger radius'}: {poi.triggerRadius} m</span>}
         <span>🗺️ {destinationName}</span>
       </div>
     </motion.section>
