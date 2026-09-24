@@ -1,3 +1,4 @@
+import { categoryLabel, categoryOf } from '../../data/categories';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
@@ -20,29 +21,9 @@ function formatDistance(meters:number,language:string) {
   return language==='es' ? `${value} km` : `${value} km away`;
 }
 
-function spanishText(text:string) {
-  const dictionary:Record<string,string> = {
-    'history':'historia','architecture':'arquitectura','art':'arte','religion':'religión','landmark':'lugar emblemático','nature':'naturaleza','food':'comida','culture':'cultura'
-  };
-  return dictionary[text.toLowerCase()] || text;
-}
 function buildNarration(poi: POI, language:string) {
   if (language === 'es') return `Bienvenido a ${poi.nameEs ?? poi.name}. ${poi.shortDescriptionEs ?? poi.shortDescription} ${poi.longDescriptionEs ?? poi.longDescription} Datos interesantes: ${(poi.factsEs ?? poi.facts).join('. ')}. Disfruta explorando este lugar.`;
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
-}
-
-function browserFallback(text:string, onEnd:()=>void) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const narration = new SpeechSynthesisUtterance(text);
-  narration.rate = 1.08;
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name))
-    || voices.find(v => v.lang.startsWith('en'));
-  if (preferred) narration.voice = preferred;
-  narration.onend = onEnd;
-  narration.onerror = onEnd;
-  window.speechSynthesis.speak(narration);
 }
 
 export function POIBottomSheet({
@@ -75,6 +56,8 @@ export function POIBottomSheet({
   language?: string;
 }) {
   const [speaking, setSpeaking] = useState(false);
+  const [loadingSpeech, setLoadingSpeech] = useState(false);
+  const [notice, setNotice] = useState('');
   const [expanded, setExpanded] = useState(false);
   const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : null;
 
@@ -86,6 +69,17 @@ export function POIBottomSheet({
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
   useEffect(() => {
+    const handler = (event: Event) => {
+      const state = (event as CustomEvent<{active:boolean;loading:boolean}>).detail;
+      setSpeaking(state.active);
+      setLoadingSpeech(state.active && state.loading);
+    };
+    window.addEventListener('smarttravel-speech-state', handler);
+    return () => window.removeEventListener('smarttravel-speech-state', handler);
+  }, []);
+
+  useEffect(() => {
+    setNotice('');
     setExpanded(false);
   }, [poi.id]);
 
@@ -113,18 +107,21 @@ export function POIBottomSheet({
 
     const narrationPOI = language === 'es' && spanish ? {...poi, shortDescription: spanish.shortDescription, longDescription: spanish.longDescription, facts: spanish.facts} : poi;
     const text = buildNarration(narrationPOI, language);
+    if (!('speechSynthesis' in window)) { setNotice(language==='es'?'Audio no disponible en este navegador.':'Audio is unavailable in this browser.'); return; }
+    setNotice('');
     setSpeaking(true);
-
+    setLoadingSpeech(true);
     speakInstantNarration(text, () => setSpeaking(false), language);
   };
 
   const directions = () => {
     if (!position) {
-      const ok=window.confirm(language==='es'?'GPS no está disponible. Google Maps se abrirá solo con el destino. ¿Continuar?':'GPS is unavailable. Google Maps will open with the destination only. Continue?');
-      if(!ok)return;
+      setNotice(language==='es'?'GPS no disponible — necesitas tu ubicación para obtener indicaciones.':'GPS unavailable — directions need your location.');
+      return;
     }
     const url = `https://www.google.com/maps/dir/?api=1&destination=${poi.lat},${poi.lng}&travelmode=walking`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!opened) setNotice(language==='es'?'Permite ventanas emergentes para abrir las indicaciones.':'Allow pop-ups to open directions.');
   };
 
   return (
@@ -143,7 +140,7 @@ export function POIBottomSheet({
       <div className="poi-title-row">
         <div className="poi-hero-icon" aria-hidden="true">{poi.emoji}</div>
         <div>
-          <span className="poi-category">{language === 'es' ? spanishText(poi.category) : poi.category}</span>
+          <span className="poi-category">{categoryLabel(categoryOf(poi), language)}</span>
           <h2>{displayName}</h2>
           <p className="poi-distance">
             {distance !== null ? formatDistance(distance, language) : (language === 'es' ? 'Distancia disponible con GPS' : 'Distance available with GPS')}
@@ -162,9 +159,9 @@ export function POIBottomSheet({
       <p className="poi-description">{displayShort}</p>
 
       <div className="poi-actions four">
-        <button onClick={listen}>
+        <button onClick={listen} aria-live="polite">
           <span>{speaking ? '⏸' : '🎧'}</span>
-          <strong>{speaking ? (language === 'es' ? 'Detener' : 'Stop') : (language === 'es' ? 'Escuchar' : 'Listen')}</strong>
+          <strong>{loadingSpeech ? (language === 'es' ? 'Cargando…' : 'Loading…') : speaking ? (language === 'es' ? 'Detener' : 'Stop') : (language === 'es' ? 'Escuchar' : 'Listen')}</strong>
         </button>
         <button onClick={() => setExpanded(value => !value)}>
           <span>📖</span>
@@ -179,6 +176,8 @@ export function POIBottomSheet({
           <strong>{language === 'es' ? 'Cómo llegar' : 'Directions'}</strong>
         </button>
       </div>
+
+      {notice && <p className="poi-notice" role="status">{notice}</p>}
 
       {expanded && (
         <motion.div className="poi-story" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>

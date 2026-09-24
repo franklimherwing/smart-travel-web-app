@@ -3,9 +3,10 @@ let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentProgress = 0;
 let narrationActive = false;
 let narrationPaused = false;
+let narrationLoading = false;
 
 function announce() {
-  window.dispatchEvent(new CustomEvent('smarttravel-speech-state',{detail:{active:narrationActive,paused:narrationPaused}}));
+  window.dispatchEvent(new CustomEvent('smarttravel-speech-state',{detail:{active:narrationActive,paused:narrationPaused,loading:narrationLoading}}));
 }
 
 export function stopNaturalNarration() {
@@ -14,6 +15,7 @@ export function stopNaturalNarration() {
   currentProgress = 0;
   narrationActive = false;
   narrationPaused = false;
+  narrationLoading = false;
   window.speechSynthesis?.cancel();
   announce();
 }
@@ -54,7 +56,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   speechToken += 1;
   const token = speechToken;
   window.speechSynthesis?.cancel();
-  if (!('speechSynthesis' in window)) { onEnd(); return; }
+  if (!('speechSynthesis' in window)) { announce(); onEnd(); return; }
 
   const safeProgress = Math.max(0, Math.min(.96, startProgress));
   const startIndex = Math.floor(text.length * safeProgress);
@@ -65,6 +67,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
   currentProgress = safeProgress;
   narrationActive = true;
   narrationPaused = false;
+  narrationLoading = true;
   utterance.lang = language === 'es' ? 'es-MX' : 'en-US';
   utterance.rate = language === 'es' ? 0.9 : 1.04;
   utterance.pitch = 1;
@@ -74,6 +77,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
     utterance.lang = preferred.lang || utterance.lang;
   }
   announce();
+  utterance.onstart = () => { if (token !== speechToken) return; narrationLoading = false; announce(); };
   utterance.onboundary = event => {
     if (token !== speechToken) return;
     const local = Math.max(0, event.charIndex || 0);
@@ -85,6 +89,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
     currentProgress = 1;
     narrationActive = false;
     narrationPaused = false;
+    narrationLoading = false;
     announce();
     onEnd();
   };
@@ -93,6 +98,7 @@ export function speakInstantNarration(text:string,onEnd:()=>void,language=localS
     currentUtterance = null;
     narrationActive = false;
     narrationPaused = false;
+    narrationLoading = false;
     announce();
     onEnd();
   };

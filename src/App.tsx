@@ -13,28 +13,17 @@ import { romePOIs } from './data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from './data/guatemala-pois';
 import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
 import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from './data/expansion-pois';
-import { getNarrationProgress, pauseNaturalNarration, resumeNaturalNarration, speakInstantNarration, stopNaturalNarration } from './services/naturalTTS';
+import { pauseNaturalNarration, resumeNaturalNarration, speakInstantNarration, stopNaturalNarration } from './services/naturalTTS';
 import type { POI } from './types/poi';
 import { withSpanishPOIs } from './data/spanish-pois';
+import { matchesCategory, type PlaceCategory } from './data/categories';
 
 type Demo = 'rome' | 'guatemala' | 'zacapa';
-type MapFilter = 'history' | 'food' | 'stories' | 'facts' | 'all';
+type MapFilter = PlaceCategory | 'all';
 
 function narrationText(poi: POI, language:string) {
   if (language === 'es') { const name=poi.nameEs ?? poi.name; const short=poi.shortDescriptionEs ?? poi.shortDescription; const long=poi.longDescriptionEs ?? poi.longDescription; const facts=poi.factsEs ?? poi.facts; return `Bienvenido a ${name}. ${short} ${long} Datos interesantes: ${facts.join('. ')}. Disfruta explorando este lugar.`; }
   return `Welcome to ${poi.name}! ${poi.shortDescription} Here's what makes this place special. ${poi.longDescription} A few quick things to notice: ${poi.facts.join('. ')}. Enjoy exploring!`;
-}
-
-function browserFallback(text: string, onEnd?: () => void, language = 'en') {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.08;
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = language === 'es' ? voices.find(v => v.lang.startsWith('es')) : (voices.find(v => /Samantha|Google US English|Microsoft Aria|Karen|Daniel/i.test(v.name)) || voices.find(v => v.lang.startsWith('en')));
-  if (preferred) utterance.voice = preferred;
-  if (onEnd) { utterance.onend = onEnd; utterance.onerror = onEnd; }
-  window.speechSynthesis.speak(utterance);
 }
 
 export default function App() {
@@ -79,19 +68,7 @@ export default function App() {
 
   const activePOIs = demo === 'guatemala' ? allPOIs.filter(p=>p.id.startsWith('gt-')) : demo === 'zacapa' ? allPOIs.filter(p=>p.id.startsWith('zacapa-')||p.id.startsWith('zx-')) : allPOIs.filter(p=>p.id.startsWith('rome-')||['colosseum','forum','pantheon','trevi','spanish-steps','navona','castel-sant-angelo','st-peters'].includes(p.id));
   const destinationName = language==='es' ? (demo==='guatemala'?'Ciudad de Guatemala':demo==='zacapa'?'Zacapa, Guatemala':'Roma, Italia') : (demo==='guatemala'?'Guatemala City':demo==='zacapa'?'Zacapa, Guatemala':'Rome, Italy');
-  const filteredPOIs = useMemo(() => {
-    if (mapFilter === 'all') return activePOIs;
-    if (mapFilter === 'food') return activePOIs.filter(p => ['food','dining'].includes(p.category.toLowerCase()) || /food|market|trattoria|restaurant|cafe|bread|sweet|comida|mercado|gastronom|🍝|🧺/i.test(`${p.name} ${p.shortDescription} ${p.emoji}`));
-    if (mapFilter === 'history') return activePOIs.filter(p => ['history','architecture','religion'].includes(p.category));
-    if (mapFilter === 'stories') return activePOIs.filter(p => {
-      const text = `${p.id} ${p.name} ${p.nameEs ?? ''} ${p.shortDescription} ${p.shortDescriptionEs ?? ''}`;
-      return p.category === 'culture' || /story|stories|tradition|legend|festival|fiesta|folklore|cuento|tradici|leyenda|oral|heritage/i.test(text);
-    });
-    return activePOIs.filter(p => {
-      const text = `${p.id} ${p.name} ${p.nameEs ?? ''} ${p.shortDescription} ${p.longDescription}`;
-      return /demograph|population|poblaci|demograf|census|censo|people|habitantes|municipality|municipio|department|departamento|founded|founded|elevation|climate|econom|geograph/i.test(text);
-    });
-  }, [activePOIs, mapFilter]);
+  const filteredPOIs = useMemo(() => activePOIs.filter(p => mapFilter === 'all' || matchesCategory(p, mapFilter)), [activePOIs, mapFilter]);
   const selectedIndex = selectedPOI ? filteredPOIs.findIndex(p => p.id === selectedPOI.id) : -1;
   const previousPOI = selectedIndex > 0 ? filteredPOIs[selectedIndex - 1] : selectedIndex === 0 && filteredPOIs.length > 1 ? filteredPOIs[filteredPOIs.length - 1] : null;
   const nextPOI = selectedIndex >= 0 && filteredPOIs.length > 1 ? filteredPOIs[(selectedIndex + 1) % filteredPOIs.length] : null;
@@ -107,9 +84,9 @@ export default function App() {
       ordered.push(remaining.shift()!);
     }
     return ordered;
-  }, [activePOIs, selectedPOI]);
+  }, [activePOIs]);
 
-  const openTour = () => { setSelectedPOI(null); setShowTour(true); };
+  const openTour = () => { stopNaturalNarration(); setSelectedPOI(null); setShowTour(true); };
 
   const startTour = () => {
     if (!tourStops.length) return;
@@ -119,6 +96,8 @@ export default function App() {
     setTourIndex(0);
     setSelectedPOI(tourStops[0]);
     setAudioMode(true);
+    stopNaturalNarration();
+    speakInstantNarration(narrationText(tourStops[0], language), () => undefined, language);
   };
   const advanceTour = () => {
     const current = tourIndexRef.current;
@@ -128,25 +107,17 @@ export default function App() {
     tourIndexRef.current = next;
     setTourIndex(next);
     setSelectedPOI(activeTour[next]);
+    stopNaturalNarration();
+    speakInstantNarration(narrationText(activeTour[next], language), () => undefined, language);
   };
 
   const showNearby = nearbyPOI && !selectedPOI && dismissedNearbyId !== nearbyPOI.id;
   useEffect(() => { if (nearbyPOI?.id !== dismissedNearbyId && navigator.vibrate) navigator.vibrate(80); }, [nearbyPOI, dismissedNearbyId]);
-  useEffect(() => {
-    if (tourIndex < 0 || !activeTour[tourIndex]) return;
-    const stop = activeTour[tourIndex];
-    const text = narrationText(stop, language);
-    stopNaturalNarration();
-    const timer = window.setTimeout(() => {
-      speakInstantNarration(text, advanceTour, language, 0);
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [tourIndex, activeTour, language]);
-
   const switchLanguage = (nextLanguage:string) => {
     if (nextLanguage === language) return;
     setLanguage(nextLanguage);
   };
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
 
   useEffect(() => {
     if (!audioMode || !nearbyPOI || autoNarratedId === nearbyPOI.id) return;
@@ -155,6 +126,7 @@ export default function App() {
   }, [audioMode, nearbyPOI, autoNarratedId, language]);
 
   const openDemo = (nextDemo: Demo) => {
+    stopNaturalNarration(); tourIndexRef.current = -1; setTourIndex(-1); setActiveTour([]);
     setDemo(nextDemo); setMapFilter('all'); setSelectedPOI(null); setShowChat(false); setShowTour(false); setShowSearch(false); setShowExplore(false); setShowCamera(false); setDemoFocusKey(k => k + 1);
   };
 
@@ -176,6 +148,7 @@ export default function App() {
       <button className={mapFilter==='food'?'active':''} onClick={()=>setMapFilter('food')} title={language==='es'?'Comida local':'Local food'}><span>🍲</span><small>{language==='es'?'Comida':'Food'}</small></button>
       <button className={mapFilter==='stories'?'active':''} onClick={()=>setMapFilter('stories')} title={language==='es'?'Historias y tradiciones':'Stories & traditions'}><span>📖</span><small>{language==='es'?'Historias':'Stories'}</small></button>
       <button className={mapFilter==='facts'?'active':''} onClick={()=>setMapFilter('facts')} title={language==='es'?'Demografía y datos':'Demographics & facts'}><span>📊</span><small>{language==='es'?'Datos':'Facts'}</small></button>
+      <button className={mapFilter==='nature'?'active':''} onClick={()=>setMapFilter('nature')} title={language==='es'?'Naturaleza':'Nature'}><span>🌿</span><small>{language==='es'?'Naturaleza':'Nature'}</small></button>
       <button className={mapFilter==='all'?'active':''} onClick={()=>setMapFilter('all')} title={language==='es'?'Todas las categorías':'All categories'}><span>✦</span><small>{language==='es'?'Todo':'All'}</small></button>
     </aside>
     <aside className="map-controls">
@@ -198,10 +171,10 @@ export default function App() {
       </div>
     </section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
-    <div className={`app-signature ${(selectedPOI||showChat||showTour||showExplore||showCamera)?'panel-open':''}`}><span>Smart AI Travel by Franklim Herwing</span><span>v0.12.0</span></div>
+    <div className={`app-signature ${(selectedPOI||showChat||showTour||showExplore||showCamera)?'panel-open':''}`}><span>Smart AI Travel by Franklim Herwing</span><span>v0.12.1</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} hasGps={!!position} destinationName={destinationName} language={language} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide language={language} onClose={()=>setShowCamera(false)} />}</AnimatePresence>
-    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={nextPOI} previousPOI={previousPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onPreviousPOI={()=>previousPOI&&setSelectedPOI(previousPOI)} onClose={()=>setSelectedPOI(null)} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
+    <AnimatePresence>{selectedPOI && !showChat && <POIBottomSheet poi={selectedPOI} position={position} nextPOI={tourIndex>=0 ? activeTour[tourIndex+1] ?? null : nextPOI} previousPOI={tourIndex>=0 ? activeTour[tourIndex-1] ?? null : previousPOI} destinationName={destinationName} saved={savedIds.includes(selectedPOI.id)} onToggleSaved={()=>setSavedIds(ids=>ids.includes(selectedPOI.id)?ids.filter(id=>id!==selectedPOI.id):[...ids,selectedPOI.id])} onAskAI={()=>setShowChat(true)} onNextPOI={()=>tourIndex >= 0 ? advanceTour() : nextPOI&&setSelectedPOI(nextPOI)} onPreviousPOI={()=>{if (tourIndex > 0) { const prior=tourIndex-1; tourIndexRef.current=prior; setTourIndex(prior); setSelectedPOI(activeTour[prior]); stopNaturalNarration(); speakInstantNarration(narrationText(activeTour[prior],language),()=>undefined,language); } else if (tourIndex < 0 && previousPOI) setSelectedPOI(previousPOI);}} onClose={()=>{stopNaturalNarration();tourIndexRef.current=-1;setTourIndex(-1);setActiveTour([]);setSelectedPOI(null)}} tourActive={tourIndex >= 0} language={language} />}</AnimatePresence>
     <AnimatePresence>{showChat && <GuideChat language={language} initialPrompt={chatPrompt} context={{destination:destinationName,poiName:selectedPOI?.name,poiSummary:selectedPOI?.longDescription,latitude:position?.lat,longitude:position?.lng,language}} onClose={()=>{setShowChat(false);setChatPrompt('')}} />}</AnimatePresence>
     <AnimatePresence>{showTour && <TourOverview stops={tourStops} language={language} onClose={()=>setShowTour(false)} onStart={startTour} />}</AnimatePresence>
   </main>;
