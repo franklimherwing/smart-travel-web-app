@@ -1,35 +1,6 @@
-import { Circle, CircleMarker, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { useEffect, useRef } from 'react';
-import { romePOIs } from '../../data/rome-pois';
-import { guatemalaCityPOIs, zacapaPOIs } from '../../data/guatemala-pois';
-import { zacapaExtraPOIs } from '../../data/zacapa-extra-pois';
-import { romeExpansionPOIs, guatemalaExpansionPOIs, zacapaExpansionPOIs } from '../../data/expansion-pois';
-import type { UserPosition } from '../../hooks/useGeolocation';
-import type { POI } from '../../types/poi';
-
-type Demo='rome'|'guatemala'|'zacapa';
-const CENTERS:Record<Demo,{center:[number,number],zoom:number}> = {
- rome:{center:[41.8986,12.4769],zoom:14},
- guatemala:{center:[14.6418,-90.5137],zoom:13},
- zacapa:{center:[14.985,-89.55],zoom:12}
-};
-const poiIcon=(poi:POI)=>L.divIcon({className:'poi-marker poi-marker--compact',html:`<span aria-hidden="true">${poi.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]});
-function MapMotion({position,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}) {
- const map=useMap();
- const centeredOnGps = useRef(false);
- useEffect(()=>{ if(position && demoFocusKey===0 && !centeredOnGps.current){ centeredOnGps.current=true; map.flyTo([position.lat,position.lng],Math.max(map.getZoom(),15),{duration:1.2}); } },[position,map,demoFocusKey]);
- useEffect(()=>{ if(demoFocusKey>0){const d=CENTERS[demo];map.flyTo(d.center,d.zoom,{duration:1.2});}},[demo,demoFocusKey,map]);
- useEffect(()=>{if(focusedPOI)map.flyTo([focusedPOI.lat,focusedPOI.lng],16,{duration:1.1});},[focusedPOI,map]);
- return null;
-}
-export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI,filteredPOIs}:{position:UserPosition|null;onSelectPOI:(poi:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null;filteredPOIs?:POI[]}) {
- const defaultPOIs=demo==='guatemala'?[...guatemalaCityPOIs,...guatemalaExpansionPOIs]:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs,...zacapaExpansionPOIs]:[...romePOIs,...romeExpansionPOIs];
- const pois=filteredPOIs ?? defaultPOIs;
- return <MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl={true} className="travel-map">
-  <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-  {pois.map(p=><Marker key={p.id} position={[p.lat,p.lng]} icon={poiIcon(p)} eventHandlers={{click:()=>onSelectPOI(p)}}/>)}
-  {position&&<><Circle center={[position.lat,position.lng]} radius={position.accuracy} pathOptions={{color:'#555',fillColor:'#777',fillOpacity:.05,weight:1}}/><CircleMarker center={[position.lat,position.lng]} radius={8} pathOptions={{color:'#fff',fillColor:'#333',fillOpacity:1,weight:3}}/></>}
-  <MapMotion position={position} demo={demo} demoFocusKey={demoFocusKey} focusedPOI={focusedPOI}/>
- </MapContainer>;
-}
+import { Circle,CircleMarker,MapContainer,Marker,TileLayer,Tooltip,useMap,useMapEvents } from 'react-leaflet'; import L from 'leaflet'; import { useEffect,useRef,useState } from 'react'; import { romePOIs } from '../../data/rome-pois'; import { guatemalaCityPOIs,zacapaPOIs } from '../../data/guatemala-pois'; import { zacapaExtraPOIs } from '../../data/zacapa-extra-pois'; import { romeExpansionPOIs,guatemalaExpansionPOIs,zacapaExpansionPOIs } from '../../data/expansion-pois'; import type { UserPosition } from '../../hooks/useGeolocation'; import type { POI } from '../../types/poi';
+type Demo='rome'|'guatemala'|'zacapa'; const CENTERS:Record<Demo,{center:[number,number],zoom:number}>={rome:{center:[41.8986,12.4769],zoom:14},guatemala:{center:[14.6418,-90.5137],zoom:13},zacapa:{center:[14.985,-89.55],zoom:12}};
+const icon=(p:POI)=>L.divIcon({className:'poi-marker poi-marker--compact',html:'<span aria-hidden="true">'+p.emoji+'</span><span class="sr-only">'+p.name+'</span>',iconSize:[30,30],iconAnchor:[15,15]});
+function Motion({position,demo,demoFocusKey,focusedPOI}:{position:UserPosition|null;demo:Demo;demoFocusKey:number;focusedPOI:POI|null}){const map=useMap();const gps=useRef(false);useEffect(()=>{if(position&&demoFocusKey===0&&!gps.current){gps.current=true;map.flyTo([position.lat,position.lng],Math.max(map.getZoom(),15),{duration:1.2})}},[position,map,demoFocusKey]);useEffect(()=>{if(demoFocusKey>0){const d=CENTERS[demo];map.flyTo(d.center,d.zoom,{duration:1.2})}},[demo,demoFocusKey,map]);useEffect(()=>{if(focusedPOI)map.flyTo([focusedPOI.lat,focusedPOI.lng],16,{duration:.8})},[focusedPOI,map]);return null}
+function TileStatus({setLoading}:{setLoading:(v:boolean)=>void}){useMapEvents({movestart:()=>setLoading(true),moveend:()=>setLoading(false),zoomstart:()=>setLoading(true),zoomend:()=>setLoading(false)});return null}
+export function TravelMap({position,onSelectPOI,demo,demoFocusKey,focusedPOI,filteredPOIs}:{position:UserPosition|null;onSelectPOI:(p:POI)=>void;demo:Demo;demoFocusKey:number;focusedPOI:POI|null;filteredPOIs?:POI[]}){const [loading,setLoading]=useState(false);const defaults=demo==='guatemala'?[...guatemalaCityPOIs,...guatemalaExpansionPOIs]:demo==='zacapa'?[...zacapaPOIs,...zacapaExtraPOIs,...zacapaExpansionPOIs]:[...romePOIs,...romeExpansionPOIs];const pois=filteredPOIs??defaults;return <><MapContainer center={CENTERS.rome.center} zoom={14} zoomControl={false} attributionControl className="travel-map"><TileLayer keepBuffer={4} attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>{pois.map(p=><Marker key={p.id} position={[p.lat,p.lng]} icon={icon(p)} title={p.name} alt={p.name} eventHandlers={{click:()=>onSelectPOI(p)}}><Tooltip direction="bottom" offset={[0,12]} permanent={false}>{p.name}</Tooltip></Marker>)}{position&&<><Circle center={[position.lat,position.lng]} radius={position.accuracy}/><CircleMarker center={[position.lat,position.lng]} radius={8}/></>}<Motion position={position} demo={demo} demoFocusKey={demoFocusKey} focusedPOI={focusedPOI}/><TileStatus setLoading={setLoading}/></MapContainer>{loading&&<div className="map-loading" aria-label="Loading map"><span/></div>}</>}
