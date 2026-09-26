@@ -6,6 +6,7 @@ const strings = {
     resume:'Resume your {name} at stop {n}?', resumeAction:'Resume', dismiss:'Dismiss', goodToKnow:'Good to know', emergency:'Emergency',
     health:'Pharmacy / hospital', comfort:'Restroom / café tip', surprise:'Surprise me', storyHelpful:'Was this story helpful?',
     thanksFeedback:'Thanks for the feedback', darkMode:'Dark mode', kidMode:'Kid mode', settings:'Settings', kidFact:'Fun fact',
+    englishOnly:'English only', mapTools:'Map tools', search:'Search', cameraGuide:'Camera guide', audioMode:'Audio mode', chooseVoice:'Choose voice', guideLanguage:'Guide language', demoDestinations:'Demo destinations', nearby:'YOU’RE NEARBY', hearStory:'Want to hear the story?', open:'Open', cameraAI:'Camera AI',
     smartWalk:'Smart walk', tourName:'{city} walk', routeInfo:'Route', elevation:'Walking difficulty', access:'Accessibility'
   },
   es: {
@@ -14,6 +15,7 @@ const strings = {
     resume:'¿Continuar tu {name} en la parada {n}?', resumeAction:'Continuar', dismiss:'Descartar', goodToKnow:'Información útil', emergency:'Emergencias',
     health:'Farmacia / hospital', comfort:'Consejo de baño / café', surprise:'Sorpréndeme', storyHelpful:'¿Te ayudó esta historia?',
     thanksFeedback:'Gracias por tu opinión', darkMode:'Modo oscuro', kidMode:'Modo niños', settings:'Ajustes', kidFact:'Dato divertido',
+    englishOnly:'Solo en inglés', mapTools:'Herramientas del mapa', search:'Buscar', cameraGuide:'Guía con cámara', audioMode:'Modo de audio', chooseVoice:'Elegir voz', guideLanguage:'Idioma del guía', demoDestinations:'Destinos de demostración', nearby:'ESTÁS CERCA', hearStory:'¿Quieres escuchar la historia?', open:'Abrir', cameraAI:'Cámara IA',
     smartWalk:'Paseo inteligente', tourName:'Paseo por {city}', routeInfo:'Ruta', elevation:'Dificultad al caminar', access:'Accesibilidad'
   }
 } as const;
