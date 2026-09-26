@@ -1,0 +1,6 @@
+import type { POI } from '../types/poi';
+export function distanceKm(a:{lat:number;lng:number},b:{lat:number;lng:number}){const R=6371,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(b.lat-a.lat),dLng=toRad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+export function routeDistanceKm(stops:POI[]){return stops.slice(1).reduce((sum,p,i)=>sum+distanceKm(stops[i],p),0);}
+export function walkingMinutes(km:number){return Math.max(1,Math.round(km/4.8*60));}
+export function buildTour(pois:POI[],minutes:number){if(!pois.length)return[];const maxStops=Math.max(1,Math.floor(minutes/8));const remaining=[...pois.slice(1)],ordered=[pois[0]];while(remaining.length&&ordered.length<maxStops){const last=ordered[ordered.length-1];remaining.sort((a,b)=>distanceKm(last,a)-distanceKm(last,b));ordered.push(remaining.shift()!);}return ordered;}
+export function bearingArrow(a:{lat:number;lng:number},b:{lat:number;lng:number}){const r=(v:number)=>v*Math.PI/180,y=Math.sin(r(b.lng-a.lng))*Math.cos(r(b.lat)),x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(r(b.lng-a.lng));const d=(Math.atan2(y,x)*180/Math.PI+360)%360;return ['↑','↗','→','↘','↓','↙','←','↖'][Math.round(d/45)%8];}
