@@ -137,7 +137,7 @@ export default function App() {
   }, [audioMode, nearbyPOI, autoNarratedId, language]);
 
   const openDemo = (nextDemo: Demo) => {
-    stopNaturalNarration(); tourIndexRef.current = -1; setTourIndex(-1); setActiveTour([]);
+    stopNaturalNarration(); tourIndexRef.current = -1; setTourIndex(-1); setActiveTour([]); localStorage.removeItem('smarttravel-active-tour');
     setDemo(nextDemo); setMapFilter('all'); setSelectedPOI(null); setShowChat(false); setShowTour(false); setShowSearch(false); setShowExplore(false); setShowCamera(false); setDemoFocusKey(k => k + 1);
   };
 
@@ -183,7 +183,7 @@ export default function App() {
       </div>
     </section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
-    {tourIndex>=0&&nextTourStop&&!showTour&&<aside className="next-stop-strip"><b>{arrow}</b><div><small>{t(language,'nextStop')} · {nextDistance.toFixed(1)} km · {t(language,'walkTime',{n:routeWalk})}</small><strong>{language==='es'?(nextTourStop.nameEs??nextTourStop.name):nextTourStop.name}</strong></div><button onClick={()=>setSelectedPOI(nextTourStop)}>{t(language,'details')}</button></aside>}
+    {tourIndex>=0&&nextTourStop&&!showTour&&<aside className="next-stop-strip"><b>{arrow}</b><div><small>{t(language,'nextStop')} · {nextDistance.toFixed(1)} km · {t(language,'routeInfo')}: {routeKm.toFixed(1)} km · {t(language,'walkTime',{n:routeWalk})}</small><strong>{language==='es'?(nextTourStop.nameEs??nextTourStop.name):nextTourStop.name}</strong></div><button onClick={()=>setSelectedPOI(nextTourStop)}>{t(language,'details')}</button></aside>}
     <div className={`app-signature ${(selectedPOI||showChat||showTour||showExplore||showCamera||showPractical)?'panel-open':''}`}><span>Smart AI Travel by Franklim Herwing</span><span>v0.13.0</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} hasGps={!!position} destinationName={destinationName} language={language} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showPractical&&<motion.section className="practical-panel" initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}}><header><div><small>{destinationName}</small><h2>{t(language,'goodToKnow')}</h2></div><button onClick={()=>setShowPractical(false)}>×</button></header><div className="practical-body"><p><b>☎ {t(language,'emergency')}:</b> {info.emergency}</p><p><b>⚕ {t(language,'health')}:</b> {language==='es'?info.health.es:info.health.en}</p><p><b>☕ {t(language,'comfort')}:</b> {language==='es'?info.comfort.es:info.comfort.en}</p></div></motion.section>}</AnimatePresence>
