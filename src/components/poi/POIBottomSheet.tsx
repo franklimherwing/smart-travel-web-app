@@ -69,6 +69,8 @@ export function POIBottomSheet({
   const [feedback,setFeedback]=useState<string>(()=>localStorage.getItem(feedbackKey)||'');
   const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : translation?.shortDescriptionEs && translation?.longDescriptionEs && translation?.factsEs ? {shortDescription:translation.shortDescriptionEs,longDescription:translation.longDescriptionEs,facts:translation.factsEs} : null;
 
+  useEffect(()=>setFeedback(localStorage.getItem(feedbackKey)||''),[feedbackKey]);
+
   useEffect(() => {
     setTranslation(null); setTranslationError(false);
     if (language !== 'es' || (poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs)) return;
