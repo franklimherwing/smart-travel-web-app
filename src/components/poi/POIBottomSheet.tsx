@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { POI } from '../../types/poi';
 import type { UserPosition } from '../../hooks/useGeolocation';
+import { t } from '../../i18n';
 import { getNarrationProgress, speakInstantNarration, stopNaturalNarration } from '../../services/naturalTTS';
 
 function distanceMeters(aLat:number, aLng:number, bLat:number, bLng:number) {
@@ -40,6 +41,7 @@ export function POIBottomSheet({
   onClose,
   tourActive = false,
   language = 'en',
+  kidMode = false,
 }: {
   poi: POI;
   position: UserPosition | null;
@@ -54,6 +56,7 @@ export function POIBottomSheet({
   onClose: () => void;
   tourActive?: boolean;
   language?: string;
+  kidMode?: boolean;
 }) {
   const [speaking, setSpeaking] = useState(false);
   const [loadingSpeech, setLoadingSpeech] = useState(false);
@@ -62,6 +65,8 @@ export function POIBottomSheet({
   const [translation, setTranslation] = useState<Partial<POI> | null>(null);
   const [translationError, setTranslationError] = useState(false);
   const [speechError, setSpeechError] = useState(false);
+  const feedbackKey = `smarttravel-feedback:${poi.id}:${Array.from(poi.longDescription).reduce((a,ch)=>((a*31+ch.charCodeAt(0))|0),0)}`;
+  const [feedback,setFeedback]=useState<string>(()=>localStorage.getItem(feedbackKey)||'');
   const spanish = poi.shortDescriptionEs && poi.longDescriptionEs && poi.factsEs ? {shortDescription:poi.shortDescriptionEs,longDescription:poi.longDescriptionEs,facts:poi.factsEs} : translation?.shortDescriptionEs && translation?.longDescriptionEs && translation?.factsEs ? {shortDescription:translation.shortDescriptionEs,longDescription:translation.longDescriptionEs,facts:translation.factsEs} : null;
 
   useEffect(() => {
@@ -78,9 +83,11 @@ export function POIBottomSheet({
   }, [poi.id, language]);
 
   const displayName = language === 'es' ? (poi.nameEs ?? translation?.nameEs ?? poi.name) : poi.name;
-  const displayShort = language === 'es' ? (spanish?.shortDescription ?? (translationError ? 'Descripción en español no disponible.' : 'Traduciendo descripción…')) : poi.shortDescription;
-  const displayLong = language === 'es' ? (spanish?.longDescription ?? (translationError ? 'Historia en español no disponible.' : 'Traduciendo historia…')) : poi.longDescription;
+  const rawShort = language === 'es' ? (spanish?.shortDescription ?? (translationError ? 'Descripción en español no disponible.' : 'Traduciendo descripción…')) : poi.shortDescription;
+  const rawLong = language === 'es' ? (spanish?.longDescription ?? (translationError ? 'Historia en español no disponible.' : 'Traduciendo historia…')) : poi.longDescription;
   const displayFacts = language === 'es' ? (spanish?.facts ?? []) : poi.facts;
+  const displayShort = kidMode ? rawShort.split(/(?<=[.!?])\s+/)[0] : rawShort;
+  const displayLong = kidMode ? rawLong.split(/(?<=[.!?])\s+/).slice(0,2).join(' ') : rawLong;
   const distance = position ? distanceMeters(position.lat, position.lng, poi.lat, poi.lng) : null;
   const walkMinutes = distance !== null && distance < 50000 ? Math.max(1, Math.round(distance / 80)) : null;
 
@@ -210,7 +217,7 @@ export function POIBottomSheet({
           <p>{displayLong}</p>
           <h3>{language === 'es' ? 'Datos interesantes' : 'Quick facts'}</h3>
           {displayFacts.length ? <ul>{displayFacts.map(fact => <li key={fact}>{fact}</li>)}</ul> : <p>{language === 'es' ? (translationError ? 'Datos en español no disponibles.' : 'Traduciendo datos…') : ''}</p>}
-          <h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
+          {kidMode && displayFacts[0] && <><h3>{t(language,'kidFact')}</h3><p>{displayFacts[0]}</p></>}<div className="story-feedback"><span>{t(language,'storyHelpful')}</span><button className={feedback==='up'?'active':''} onClick={()=>{localStorage.setItem(feedbackKey,'up');setFeedback('up')}}>👍</button><button className={feedback==='down'?'active':''} onClick={()=>{localStorage.setItem(feedbackKey,'down');setFeedback('down')}}>👎</button>{feedback&&<small>{t(language,'thanksFeedback')}</small>}</div><h3>{language === 'es' ? 'Fuentes' : 'Sources'}</h3>
           <div className="poi-sources">
             {poi.sources.map(source => (
               <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
