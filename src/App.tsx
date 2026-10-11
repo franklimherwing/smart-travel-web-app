@@ -9,6 +9,7 @@ import { ExplorePanel } from './components/explore/ExplorePanel';
 import { CameraGuide } from './components/camera/CameraGuide';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useNearbyPOI } from './hooks/useNearbyPOI';
+import { bostonPOIs } from './data/boston-pois';
 import { romePOIs } from './data/rome-pois';
 import { guatemalaCityPOIs, zacapaPOIs } from './data/guatemala-pois';
 import { zacapaExtraPOIs } from './data/zacapa-extra-pois';
@@ -21,7 +22,7 @@ import { buildTour,bearingArrow,distanceKm,routeDistanceKm,walkingMinutes } from
 import { practicalInfo } from './data/practical-info';
 import { t } from './i18n';
 
-type Demo = 'rome' | 'guatemala' | 'zacapa';
+type Demo = 'rome' | 'guatemala' | 'zacapa' | 'boston';
 type MapFilter = PlaceCategory | 'all';
 type ResumeData={demo:Demo;ids:string[];index:number;minutes:number};
 
@@ -32,7 +33,7 @@ function narrationText(poi: POI, language:string) {
 
 export default function App() {
   const { position, error } = useGeolocation();
-  const allPOIs = useMemo(() => withSpanishPOIs([...romePOIs, ...romeExpansionPOIs, ...guatemalaCityPOIs, ...guatemalaExpansionPOIs, ...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs]), []);
+  const allPOIs = useMemo(() => withSpanishPOIs([...romePOIs, ...romeExpansionPOIs, ...bostonPOIs, ...guatemalaCityPOIs, ...guatemalaExpansionPOIs, ...zacapaPOIs, ...zacapaExtraPOIs, ...zacapaExpansionPOIs]), []);
   const nearbyPOI = useNearbyPOI(position, allPOIs);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [demo, setDemo] = useState<Demo>('rome');
@@ -73,13 +74,13 @@ export default function App() {
 
   useEffect(() => {
     if (!position) return;
-    const destinations:[Demo,number,number][] = [['rome',41.8986,12.4769],['guatemala',14.6418,-90.5137],['zacapa',14.985,-89.55]];
+    const destinations:[Demo,number,number][] = [['rome',41.8986,12.4769],['guatemala',14.6418,-90.5137],['zacapa',14.985,-89.55],['boston',42.3601,-71.0547]];
     const nearest = destinations.map(([id,lat,lng]) => ({id,d:Math.hypot(position.lat-lat, position.lng-lng)})).sort((a,b)=>a.d-b.d)[0];
     if (nearest && nearest.d < .65) setDemo(nearest.id);
   }, [position]);
 
-  const activePOIs = demo === 'guatemala' ? allPOIs.filter(p=>p.id.startsWith('gt-')) : demo === 'zacapa' ? allPOIs.filter(p=>p.id.startsWith('zacapa-')||p.id.startsWith('zx-')) : allPOIs.filter(p=>p.id.startsWith('rome-')||['colosseum','forum','pantheon','trevi','spanish-steps','navona','castel-sant-angelo','st-peters'].includes(p.id));
-  const destinationName = language==='es' ? (demo==='guatemala'?'Ciudad de Guatemala':demo==='zacapa'?'Zacapa, Guatemala':'Roma, Italia') : (demo==='guatemala'?'Guatemala City':demo==='zacapa'?'Zacapa, Guatemala':'Rome, Italy');
+  const activePOIs = demo === 'boston' ? allPOIs.filter(p=>p.id.startsWith('boston-')) : demo === 'guatemala' ? allPOIs.filter(p=>p.id.startsWith('gt-')) : demo === 'zacapa' ? allPOIs.filter(p=>p.id.startsWith('zacapa-')||p.id.startsWith('zx-')) : allPOIs.filter(p=>p.id.startsWith('rome-')||['colosseum','forum','pantheon','trevi','spanish-steps','navona','castel-sant-angelo','st-peters'].includes(p.id));
+  const destinationName = language==='es' ? (demo==='boston'?'Boston, Massachusetts':demo==='guatemala'?'Ciudad de Guatemala':demo==='zacapa'?'Zacapa, Guatemala':'Roma, Italia') : (demo==='boston'?'Boston, Massachusetts':demo==='guatemala'?'Guatemala City':demo==='zacapa'?'Zacapa, Guatemala':'Rome, Italy');
   const filteredPOIs = useMemo(() => activePOIs.filter(p => mapFilter === 'all' || matchesCategory(p, mapFilter)), [activePOIs, mapFilter]);
   const selectedIndex = selectedPOI ? filteredPOIs.findIndex(p => p.id === selectedPOI.id) : -1;
   const previousPOI = selectedIndex > 0 ? filteredPOIs[selectedIndex - 1] : selectedIndex === 0 && filteredPOIs.length > 1 ? filteredPOIs[filteredPOIs.length - 1] : null;
@@ -151,7 +152,7 @@ export default function App() {
     </header>
     <div className="walk-pill language-pill" aria-label={t(language,'guideLanguage')}><button className={language==='en'?'active':''} onClick={()=>switchLanguage('en')}>English</button><button className={language==='es'?'active':''} onClick={()=>switchLanguage('es')}>Español</button></div>
     <nav className="demo-switcher" aria-label={t(language,'demoDestinations')}>
-      <button className={demo==='rome'?'active':''} onClick={()=>openDemo('rome')}>🏛️ {language==='es'?'Roma':'Rome'}</button>
+      <button className={demo==='boston'?'active':''} onClick={()=>openDemo('boston')}>🇺🇸 Boston</button><button className={demo==='rome'?'active':''} onClick={()=>openDemo('rome')}>🏛️ {language==='es'?'Roma':'Rome'}</button>
       <button className={demo==='guatemala'?'active':''} onClick={()=>openDemo('guatemala')}>🇬🇹 {language==='es'?'Ciudad de Guatemala':'Guatemala City'}</button>
       <button className={demo==='zacapa'?'active':''} onClick={()=>openDemo('zacapa')}>🌄 Zacapa</button>
     <button className="practical-button" aria-label={t(language,'goodToKnow')} onClick={()=>setShowPractical(true)}>ⓘ</button></nav>
@@ -184,7 +185,7 @@ export default function App() {
     </section>}
     {speechState.active && <button className="global-speech-control" aria-label={speechState.paused ? (language==='es'?'Continuar narración':'Resume narration') : (language==='es'?'Pausar narración':'Pause narration')} onClick={()=>speechState.paused?resumeNaturalNarration():pauseNaturalNarration()}>{speechState.paused?'▶':'■'}</button>}
     {tourIndex>=0&&nextTourStop&&!showTour&&<aside className="next-stop-strip"><b>{arrow}</b><div><small>{t(language,'nextStop')} · {nextDistance.toFixed(1)} km · {t(language,'routeInfo')}: {routeKm.toFixed(1)} km · {t(language,'walkTime',{n:routeWalk})}</small><strong>{language==='es'?(nextTourStop.nameEs??nextTourStop.name):nextTourStop.name}</strong></div><button onClick={()=>setSelectedPOI(nextTourStop)}>{t(language,'details')}</button></aside>}
-    <div className={`app-signature ${(selectedPOI||showChat||showTour||showExplore||showCamera||showPractical)?'panel-open':''}`}><span>Smart AI Travel by Franklim Herwing</span><span>v0.13.1</span></div>
+    <div className={`app-signature ${(selectedPOI||showChat||showTour||showExplore||showCamera||showPractical)?'panel-open':''}`}><span>Smart AI Travel by Franklim Herwing</span><span>v0.14.0</span></div>
     <AnimatePresence>{showExplore && <ExplorePanel pois={activePOIs} savedIds={savedIds} hasGps={!!position} destinationName={destinationName} language={language} onClose={()=>setShowExplore(false)} onSelect={p=>{setSelectedPOI(p);setShowExplore(false)}} />}</AnimatePresence>
     <AnimatePresence>{showPractical&&<motion.section className="practical-panel" initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}}><header><div><small>{destinationName}</small><h2>{t(language,'goodToKnow')}</h2></div><button onClick={()=>setShowPractical(false)}>×</button></header><div className="practical-body"><p><b>☎ {t(language,'emergency')}:</b> {info.emergency}</p><p><b>⚕ {t(language,'health')}:</b> {language==='es'?info.health.es:info.health.en}</p><p><b>☕ {t(language,'comfort')}:</b> {language==='es'?info.comfort.es:info.comfort.en}</p></div></motion.section>}</AnimatePresence>
     <AnimatePresence>{showCamera && <CameraGuide language={language} onClose={()=>setShowCamera(false)} />}</AnimatePresence>
